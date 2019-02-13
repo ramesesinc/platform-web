@@ -1,0 +1,15 @@
+<%
+def width = OPTIONS.width ? OPTIONS.width : "100";
+def height = OPTIONS.height ? OPTIONS.height : "100";
+def contextPath = OPTIONS.contextPath;
+if ( contextPath == null ) contextPath = "";
+%>
+<% for( o in DATA ) { %>
+	<div>
+		<img src="${contextPath}${o.path}" width="${width}" />
+		<br>
+		<i>${o.title}</i>
+	</div>
+<% } %>
+
+

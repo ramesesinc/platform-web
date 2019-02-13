@@ -1,0 +1,9 @@
+<% for( o in PAGE.themeStyles ) { %>
+@css( o )
+<%}%>
+<% for(o in PAGE.styles) {%>
+<link href="${ATTRS.contextPath}${o}" type="text/css" rel="stylesheet" />	
+<% } %>
+<% for(o in PAGE.scripts) {%>
+<script src="${ATTRS.contextPath}${o}" type="text/javascript"></script>	
+<% } %>

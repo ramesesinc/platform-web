@@ -1,0 +1,2 @@
+<script src="${ATTRS.contextPath}/js/lib/crypto-hmac-md5.js" type="text/javascript"></script>
+<script src="${ATTRS.contextPath}/js/lib/crypto-md5.js" type="text/javascript"></script>

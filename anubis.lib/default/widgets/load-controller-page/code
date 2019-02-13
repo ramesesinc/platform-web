@@ -1,0 +1,19 @@
+<%
+	def path = OPTIONS.value;
+	if (!path) OPTIONS.path;
+	if (!path) path = PAGE.path;
+	
+	if (path) {
+		def items = ANUBIS.getFolder(path)?.children;
+		if (items) { 
+			def contextPath = ATTRS.contextPath; 
+			items.each { 
+				if (OPTIONS.excludePage && it.pagename.matches(OPTIONS.excludePage)) {
+					//do nothing 
+				} else { 
+					print "'${it.pagename}':'${contextPath}${it.href? it.href: it.path}', "; 
+				}
+			} 
+		}
+	} 
+%>

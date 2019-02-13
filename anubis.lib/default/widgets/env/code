@@ -1,0 +1,1 @@
+<script> Env.context = "${ATTRS.contextPath}"; </script> 

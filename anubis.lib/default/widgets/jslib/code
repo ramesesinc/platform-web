@@ -1,0 +1,5 @@
+<% 
+    def flavor = 'default' 
+    def themeName = THEME.name? THEME.name: 'default';
+%>
+<script src="${ATTRS.contextPath}/themes/${themeName}/js/${OPTIONS.value}.js" type="text/javascript"></script> 

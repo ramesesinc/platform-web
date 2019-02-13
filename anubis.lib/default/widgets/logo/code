@@ -1,0 +1,16 @@
+<% 
+def homepage = (PROJECT.homepage ? PROJECT.homepage : ''); 
+def contextPath = ATTRS.contextPath; 
+def href = ''+ contextPath +'/'+ homepage; 
+%>
+<%if( PROJECT.logo ){%>
+	<a href="${href}" style="border:none;text-decoration:none;">
+		<div class="logo"><img src="${contextPath}${PROJECT.logo}" style="border:none"/></div>
+	</a>
+<%}%>
+
+<%if( !PROJECT.logo ) {%>
+	<a href="${href}" style="border:none;text-decoration:none;">
+		COMPANY LOGO
+	</a>
+<%}%>
