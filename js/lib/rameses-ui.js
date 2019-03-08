@@ -64,7 +64,7 @@ var BindingUtils = new function() {
 		if ( R.attr($e,'visibleWhen') ) {
 			var expr = R.attr($e, 'visibleWhen');
 			try {
-				var res = expr.evaluate( $ctx(contextName) );
+				var res = ( expr.evaluate( $ctx(contextName)) || 'false');
 				isVisible = (res=='false' || res=='undefined' || res==null || res==false)? false: true;
 			} catch(e) {
 				if ( window.console && R.DEBUG ) console.log('error evaluating visibleWhen: ' + e.message);
@@ -81,8 +81,8 @@ var BindingUtils = new function() {
 				var readonly = true; 
 				var expr = R.attr($e, 'readonlyWhen');
 				try {
-					var res = expr.evaluate( $ctx(contextName) );
-					readonly = (res && res != 'false' && res != 'null' && res != 'undefined' && res != '');
+					var res = (expr.evaluate( $ctx(contextName)) || 'false');
+					readonly = ((res == 'false' || res == 'undefined' || res == 'null' || res == '') ? false : true);
 				} catch(e) {
 					if ( window.console && R.DEBUG ) console.log('error evaluating readonlyWhen: ' + e.message);
 					
@@ -878,6 +878,10 @@ function Controller( code, pages ) {
 				$.extend(params,p);
 			}
 			
+			if ( _controller.code.beforepageload != null ) { 
+				_controller.code.beforepageload(outcome, params);
+			} 
+
 			var $target = $('#'+target);
 			$target.load(this.pages[outcome], params, function() { 
                 if ( _controller.code.onpageload != null ) _controller.code.onpageload(outcome);
@@ -1390,6 +1394,7 @@ BindingUtils.handlers.input_submit = function( elem, controller, idx ) {
 	BindingUtils.handlers.label = renderer;
 	BindingUtils.handlers.span_label = renderer;
 	BindingUtils.handlers.div_label = renderer;
+	BindingUtils.handlers.p = renderer;
 	
 	function renderer(elem, controller, idx)
 	{

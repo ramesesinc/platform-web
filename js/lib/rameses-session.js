@@ -34,7 +34,6 @@ var Socket = new function() {
         var self = this;
         var _channel = channel;
         var _token =  Math.floor(Math.random()*1000000001) + '-' + Math.floor(Math.random()*1000000001);
-        var _contextpath = (Env.context ? Env.context : '');
         var _running = false;
 
         this.handlers = {};
@@ -49,7 +48,7 @@ var Socket = new function() {
 
 			try {
 				$.ajax({ 
-					url: ""+ _contextpath +"/poll/"+ _channel +"/"+ _token, 
+					url: "/poll/"+_channel+"/"+_token, 
 					dataType: 'text',
 					cache: false, 
 					complete: function(o,textStatus) {

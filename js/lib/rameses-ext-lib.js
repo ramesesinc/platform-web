@@ -14,16 +14,25 @@ String.prototype.formatCode = function(space) {
 	if( !space ) space = "_";
 	return this.trim().toUpperCase().replace(/\s+/g, space);
 };
+String.prototype.generateKey = function() {
+    var s = [];
+    var hexDigits = "0123456789abcdef";
+    for (var i = 0; i < 36; i++) {
+        s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1);
+    }
+    s[14] = "4";  // bits 12-15 of the time_hi_and_version field to 0010
+    s[19] = hexDigits.substr((s[19] & 0x3) | 0x8, 1);  // bits 6-7 of the clock_seq_hi_and_reserved to 01
+    s[8] = s[13] = s[18] = s[23] = "-";
+    return s.join("");
+};
 
 //******************************************************************************************************************
 // Array extensions
 //******************************************************************************************************************
 if(!Array.indexOf){ //some lower versions of IE doesn't have indexOf
-	Array.prototype.indexOf = function(obj){
+	Array.prototype.indexOf = function(obj){		
 		for(var i=0; i<this.length; i++){
-			if(this[i]==obj){
-				return i;
-			}
+			if(this[i]==obj) return i;
 		}
 		return -1;
 	}
@@ -31,12 +40,10 @@ if(!Array.indexOf){ //some lower versions of IE doesn't have indexOf
 
 Array.prototype.change = function(item1, item2) {
 	var idx = this.indexOf(item1); 
-	if (idx >= 0) 
-	{
+	if (idx >= 0) {
 		this[idx] = item2; 
 		return true; 
-	} 
-	else {
+	} else {
 		return false; 
 	} 
 } 
@@ -46,8 +53,7 @@ Array.prototype.remove = function( from, to ) {
 		var idx = this.indexOf( from );
 		if( idx >= 0 ) return this.remove( idx );
 		return this;
-	}
-	else {
+	} else {
 		var rest = this.slice((to || from) + 1 || this.length);
 		this.length = from < 0 ? this.length + from : from;
 		return this.push.apply(this, rest);
@@ -60,8 +66,7 @@ Array.prototype.removeAll = function( func ) {
 		var item = this[i];
 		if( !func(item) == true ) {
 			_retained.push( item );
-		}
-		else {
+		} else {
 			_removed.push( item );
 		}
 	}
@@ -90,8 +95,7 @@ Array.prototype.find = function( func) {
 			}
 		}
 		return null;
-	}
-	else {
+	} else {
 		alert("Please pass a function when using find","Error");
 	}
 };
@@ -104,8 +108,7 @@ Array.prototype.contains = function( func) {
 			}
 		}
 		return false;
-	}
-	else {
+	} else {
 		alert("Please pass a function when using find","Error");
 	}
 };
@@ -119,8 +122,7 @@ Array.prototype.findAll = function( func ) {
 			}
 		}
 		return _arr;
-	}
-	else {
+	} else {
 		alert("Please pass a function when using findAll","Error");
 	}
 };
@@ -131,18 +133,39 @@ Array.prototype.collect = function( func ) {
 			var item = this[i];
 			var o = func(item);
 			if(o!=null) _arr.push(o);
-		}
+		} 
 		return _arr;
-	}
-	else {
+	} else {
 		alert("Please pass a function when using collect","Error");
 	}
 };
 Array.prototype.clear = function() {
 	return this.splice(0,this.length);
 };
-
-
+Array.prototype.unique = function(_key) {	
+	if (_key) { 
+		var _keys   = [];
+		var _values = [];
+		for (var i=0; i<this.length; i++) { 
+			var o = this[i]; 
+			var key = o[_key]; 
+			var idx = _keys.indexOf(key); 
+			if (idx < 0) { 
+				_keys.push(key); 
+				_values.push(o); 
+			} 
+		} 
+		return _values; 
+	} else {
+		var _arrays = []; 
+		for (var i=0; i<this.length; i++) { 
+			var o = this[i]; 
+			var idx = _arrays.indexOf(o); 
+			if (idx < 0) _arrays.push(o); 
+		} 
+		return _arrays; 		
+	}
+}; 
 
 /**
  * string expression support
@@ -209,7 +232,6 @@ Number.prototype.formatDecimal = function() {
 	}
 	return x1 + x2;
 };
-
 var KeyGen = new function() {
 	this.generateKey = function(string_length) {
 		if (!string_length) string_length=8;
@@ -222,8 +244,18 @@ var KeyGen = new function() {
 		}
 		return randomstring;
 	}
+	this.UID = function(){
+	    var s = [];
+	    var hexDigits = "0123456789abcdef";
+	    for (var i = 0; i < 36; i++) {
+	        s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1);
+	    }
+	    s[14] = "4";  // bits 12-15 of the time_hi_and_version field to 0010
+	    s[19] = hexDigits.substr((s[19] & 0x3) | 0x8, 1);  // bits 6-7 of the clock_seq_hi_and_reserved to 01
+	    s[8] = s[13] = s[18] = s[23] = "-";
+	    return s.join("");		
+	}
 }
-
 var NumberUtils = new function() {
     this.toNumber = function( val ) {
 		if (!val) return null; 
@@ -479,5 +511,4 @@ var CRUDFactory = new function() {
 		return o; 
 	} 
 
-}
-
+} 
