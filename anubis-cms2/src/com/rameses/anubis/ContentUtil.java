@@ -105,9 +105,14 @@ public class ContentUtil {
         try {
             if(is==null) return null;
             return JsonUtil.toMap( StreamUtil.toString(is) );
-        } catch(Exception e) {
+        } 
+        catch(RuntimeException re) {
+            throw re; 
+        } 
+        catch(Exception e) {
             throw new RuntimeException(e);
-        } finally {
+        } 
+        finally {
             try {is.close(); } catch(Exception ign){;}
         }
     }
@@ -118,30 +123,18 @@ public class ContentUtil {
             is = findResource(path1, path2, path3);
             if(is==null) return null;
             return JsonUtil.toMap( StreamUtil.toString(is) );
-        } catch(Exception e) {
+        } 
+        catch(RuntimeException re) {
+            throw re; 
+        } 
+        catch(Exception e) {
             throw new RuntimeException(e);
-        } finally {
-            try {is.close(); } catch(Exception ign){;}
-        }
-    }
-    /*
-    public static Map getProperties(String path1, String path2, String path3) {
-        InputStream is = null;
-        try {
-            is = findResource(path1, path2,path3);
-            if(is==null) return null;
-            Properties props = new Properties();
-            props.load(is);
-            return props;
-        } catch(Exception e) {
-            throw new RuntimeException(e);
-        } finally {
+        } 
+        finally {
             try {is.close(); } catch(Exception ign){;}
         }
     }
      
-     
-     */
     public static Map getProperties(URL u) {
         InputStream is = null;
         try {
@@ -150,18 +143,23 @@ public class ContentUtil {
             Properties props = new Properties();
             props.load(is);
             return props;
-        } catch(Exception e) {
+        } 
+        catch(RuntimeException re) {
+            throw re; 
+        } 
+        catch(Exception e) {
             throw new RuntimeException(e);
-        } finally {
+        } 
+        finally {
             try {is.close(); } catch(Exception ign){;}
         }
     }
     public static String replaceSysProperty(String name) {
         AnubisContext ctx = AnubisContext.getCurrentContext();
         Project proj = null;
-        if(ctx!=null) {
+        if ( ctx != null ) { 
             proj = ctx.getProject();
-        }
+        } 
         Pattern p = Pattern.compile("\\$\\{.*?\\}");
         Matcher m = p.matcher(name);
         StringBuffer sb = new StringBuffer();
@@ -177,8 +175,8 @@ public class ContentUtil {
             if (value==null) value = System.getProperty(s);
             if (value==null) value = "";
             
-            sb.append(value);
-            start = m.end();
+            sb.append(value); 
+            start = m.end(); 
         }
         if( start < s1.length()  ) sb.append( s1.substring(start));
         return sb.toString();
@@ -192,7 +190,7 @@ public class ContentUtil {
                 if(u!=null) {
                     return u.openStream();
                 }
-            } catch(Exception ign) {
+            } catch(Throwable t) {
                 //
             }
         }
@@ -212,18 +210,26 @@ public class ContentUtil {
                     is = u.openStream();
                     if(is!=null) break;
                 }
-            } catch(Exception ign) {
-                //
-            }
+            } 
+            catch(Throwable ign) {;}
         }
-        if(is==null)
+        
+        if ( is == null ) {
             throw new ResourceNotFoundException(contentName + " not found");
-        try {
-            return JsonUtil.toMap( StreamUtil.toString(is) );
-        } catch(Exception e) {
+        }
+
+        try { 
+            String str = StreamUtil.toString( is ); 
+            return JsonUtil.toMap( new Util().resolveValue( str )); 
+        } 
+        catch(RuntimeException re) {
+            throw re; 
+        } 
+        catch(Exception e) {
             throw new RuntimeException(e);
-        } finally {
-            try { is.close(); } catch(Exception ign){;}
+        } 
+        finally {
+            try { is.close(); } catch(Throwable t){;}
         }
     }
      
@@ -231,8 +237,53 @@ public class ContentUtil {
         try {
             return new ConfigProperties(new URL(urlPath));
         }
+        catch(RuntimeException re) {
+            throw re; 
+        }
         catch(Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+    
+    private static class Util {
+
+        public String resolveValue( String str ) {
+            Project proj = null; 
+            try { 
+                AnubisContext ctx = AnubisContext.getCurrentContext();
+                proj = ctx.getProject(); 
+            } 
+            catch(Throwable t) {;} 
+            
+            int startidx = 0;
+            StringBuilder buff = new StringBuilder();
+            while ( true ) {
+                int idx0 = str.indexOf("${", startidx); 
+                if ( idx0 < 0 ) break; 
+
+                int idx1 = str.indexOf("}", idx0); 
+                if ( idx1 < 0 ) break; 
+
+                buff.append(str.substring(startidx, idx0)); 
+
+                String skey = str.substring(idx0+2, idx1); 
+                Object objval = (proj == null ? null : proj.get(skey)); 
+                if (objval == null) objval = System.getProperty( skey ); 
+                if (objval == null) objval = System.getenv( skey ); 
+
+                if (objval == null) { 
+                    buff.append(str.substring(idx0, idx1+1)); 
+                } else { 
+                    buff.append( objval ); 
+                } 
+
+                startidx = idx1 + 1; 
+            } 
+
+            if ( startidx < str.length()) {  
+                buff.append(str.substring(startidx)); 
+            } 
+            return buff.toString(); 
         }
     }
 }

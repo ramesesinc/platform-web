@@ -91,6 +91,7 @@ public class AnubisWebServer implements ServerLoader  {
         mainctx.addServlet(AnubisThemeServlet.class, "/themes/*");
         mainctx.addServlet(JsProxyServlet.class, "/js-proxy/*");
         mainctx.addServlet(JsInvokeServlet.class, "/js-invoke/*");
+        mainctx.addServlet(JsConnectionServlet.class, "/connections/*");
         mainctx.addServlet(AnubisActionServlet.class, "/actions/*");
         mainctx.addServlet(AnubisMediaServlet.class, "/media/*");
         mainctx.addServlet(AnubisUploadServlet.class, "/upload/*");

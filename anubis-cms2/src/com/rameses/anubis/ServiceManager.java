@@ -135,13 +135,17 @@ public class ServiceManager {
                     module.getUrl() +  SERVICE_DIR + "/" + name,
                     module.getProvider() +  SERVICE_DIR + "/" + name
                 }, name );
-            } else {
+            } 
+            else {
                 Project project = ctx.getProject();
                 return ContentUtil.findJsonResource( new String[]{
                     project.getUrl() + "/" + SERVICE_DIR +  "/" + name
                 }, name );
             }
         } 
+        catch(RuntimeException re) {
+            throw re;
+        }
         catch(Exception e) {
             throw new RuntimeException(e);
         }
