@@ -17,8 +17,14 @@ import com.rameses.anubis.Project;
 import com.rameses.util.ExceptionManager;
 import groovy.lang.GroovyObject;
 import java.io.Writer;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import net.sf.json.JSONSerializer;
+import net.sf.json.JsonConfig;
+import net.sf.json.processors.JsonValueProcessor;
 
 /**
  *
@@ -69,8 +75,19 @@ public class JsInvokeServlet extends AbstractAnubisServlet {
             GroovyObject gobj =(GroovyObject) project.getServiceManager().lookup(serviceName, connectionName);
             if (args == null) args = new Object[]{};
             Object result = gobj.invokeMethod( action, args  );
-            writeResponse( JsonUtil.toString(result), hres );
             
+            hres.setContentType("application/json"); 
+            if ( result instanceof Map || result instanceof List ) {
+                JsonConfig jc = new JsonConfig(); 
+                jc.registerJsonValueProcessor(java.util.Date.class, new JsonDateValueProcessor()); 
+                jc.registerJsonValueProcessor(java.sql.Date.class, new JsonDateValueProcessor()); 
+                jc.registerJsonValueProcessor(java.sql.Timestamp.class, new JsonDateValueProcessor()); 
+                Object json = JSONSerializer.toJSON(result, jc);     
+                writeResponse( json.toString(), hres );
+            }
+            else {
+                writeResponse( JsonUtil.toString(result), hres );
+            }
         } 
         catch(Exception e) {
             e.printStackTrace();
@@ -94,4 +111,22 @@ public class JsInvokeServlet extends AbstractAnubisServlet {
         }
     }
     
+    private class JsonDateValueProcessor implements JsonValueProcessor {
+
+        private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd mm:hh:ss"); 
+        
+        public Object processArrayValue(Object value, JsonConfig jc) { 
+            if ( value instanceof java.util.Date ) {
+                return sdf.format((java.util.Date) value); 
+            }
+            return "";
+        }
+
+        public Object processObjectValue(String name, Object value, JsonConfig jc) { 
+            if ( value instanceof java.util.Date ) {
+                return sdf.format((java.util.Date) value); 
+            }
+            return "";
+        }
+    }    
 }

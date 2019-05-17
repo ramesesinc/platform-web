@@ -64,7 +64,7 @@ public class Project extends HashMap  {
         this.fileManager = new FileManager(this);
         this.folderManager = new FolderManager(this);
         //project specific files. This exists in a project only
-        this.permalinkManager = new PermalinkManager();
+        this.permalinkManager = new PermalinkManager( this );
         this.mimetypeManager = new MimeTypeManager();
         this.themes = new LinkedHashMap();
         this.modules = new LinkedHashMap();        

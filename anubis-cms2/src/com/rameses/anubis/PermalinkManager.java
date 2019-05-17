@@ -10,8 +10,7 @@
 package com.rameses.anubis;
 
 import com.rameses.util.ConfigProperties;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.URL;
 import java.util.Map;
 
 /**
@@ -20,44 +19,27 @@ import java.util.Map;
  */
 public class PermalinkManager {
     
-    private List<PermalinkEntry> mappings = new ArrayList();
+    private Project project;
+    private PageMapper mapper;
+    
+    public PermalinkManager( Project project ) {
+        this.project = project;
+        this.mapper = new PageMapper();
+    }
     
     public void init(ConfigProperties conf) {
-        Map permaLinks = conf.getProperties("permalink-mapping");
-        if(permaLinks!=null) {
-            for(Object o: permaLinks.entrySet()) {
-                Map.Entry me = (Map.Entry)o;
-                addMapping( me.getKey()+"", me.getValue()+"" );
-            }
+        URL url = null;
+        try {
+            url = new URL( project.getUrl() + "/page-mapping.conf" );
+            mapper.load( url.openStream() ); 
+        } catch(Throwable t) {
+            System.out.println("failed to load "+ url); 
         }
     }
-    
-    public void addMapping(String pattern, String page) {
-        pattern = pattern.trim();
-        if(!pattern.startsWith("/")) pattern = "/" + pattern;
-        page = page.trim();
-        if(!page.startsWith("/")) page = "/" + page;
-        if( page.endsWith("/.*")) {
-            //do nothing
-        }
-        else if(!page.endsWith(".pg") ) {
-            page = page + ".pg";
-        }
-        mappings.add( new PermalinkEntry(pattern, page) );
-    }
-    
+        
     public String resolveName(String path, Map params) {
-        String resolvedName = null;
-        for(PermalinkEntry m: mappings) {
-            if( m.matches(path)) {
-                PermalinkEntry.MatchResult mr = m.buildResult(path);
-                resolvedName = mr.getResolvedPath();
-                params.putAll( mr.getTokens() );
-                break;
-            }
-        }
-        return resolvedName;
+        PageMapperResult res = mapper.getFileSource(path); 
+        params.putAll( res.getParams() ); 
+        return res.getFilePath() + ".pg"; 
     }
-    
-    
 }

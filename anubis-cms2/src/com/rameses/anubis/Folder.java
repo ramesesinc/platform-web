@@ -20,7 +20,6 @@ import java.util.Map;
 public class Folder {
     
     private Map meta;
-    private List<PermalinkEntry> urlMappings = new ArrayList();
     private List<File> children = new ArrayList();
     private String path;
     

@@ -53,7 +53,9 @@ public final class JsonUtil {
             return JSONObject.fromObject(o).toString();
         } else if(o instanceof List) {
             return JSONArray.fromObject(o).toString();
-        } else if( (o instanceof String) || (o instanceof Date)) {
+        } else if(o instanceof Date) {
+            return "\"" + o.toString() + "\"";
+        } else if(o instanceof String && !(o.toString().startsWith("{") || o.toString().endsWith("["))) {
             return "\"" + o.toString() + "\"";
         } else {
             return o.toString();
