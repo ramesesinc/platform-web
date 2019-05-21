@@ -26,6 +26,11 @@ public class TemplateManager {
     private List<MappingEntry> fragmentMappings = new ArrayList();
     
     private ThemeTemplateCacheSource templateSource = new ThemeTemplateCacheSource();
+
+    public void clear() {
+        mappings.clear();
+        fragmentMappings.clear();
+    }
     
     public void init(ConfigProperties conf) {
         Map masters = conf.getProperties( "template-mapping" );
@@ -45,9 +50,8 @@ public class TemplateManager {
                 fragmentMappings.add( new MappingEntry(me.getKey()+"", me.getValue()+"" ));
             }
         }
-        
     }
-    
+        
     private void renderTemplate(String[] masters, Map pmap, Project project) {
         for(String _master: masters) {
             try {

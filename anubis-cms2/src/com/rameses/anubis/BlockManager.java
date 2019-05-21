@@ -26,6 +26,10 @@ public class BlockManager {
     private BlockCacheSource blockSource = new BlockCacheSource();
     private GlobalBlockCacheSource globalBlockSource = new GlobalBlockCacheSource();
     
+    public void clear() {
+        mappings.clear(); 
+    }
+    
     public void init(ConfigProperties conf) {
         Map map = conf.getProperties( "block-mapping" );
         if(map!=null) {

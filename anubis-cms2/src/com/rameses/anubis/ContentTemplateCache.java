@@ -22,15 +22,22 @@ public class ContentTemplateCache {
     
     private Map<String, ContentTemplate> cache = new HashMap();
     
+    public void clear() {
+        cache.clear(); 
+    }
+    
     public ContentTemplate getTemplate(String name, ContentTemplateSource src ) throws ResourceNotFoundException {
         String n = src.getType()+":"+name;
         InputStream is = null;
         try {
+            AnubisContext actx = AnubisContext.getCurrentContext();
+            boolean cached = actx.getProject().isCached();
             if(!cache.containsKey(n)) {
                 is = src.getResource( name );
                 Template temp = TemplateParser.getInstance().parse(is);
                 ContentTemplate ct = new ContentTemplate(temp);
-                cache.put( n, ct );
+                if ( cached ) cache.put( n, ct );
+                else return ct;
             }
             return cache.get(n);
         } 

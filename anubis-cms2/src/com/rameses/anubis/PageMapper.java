@@ -18,6 +18,10 @@ public class PageMapper {
     
     private LinkedList<PageMapperEntry> entries = new LinkedList<PageMapperEntry>();
     
+    public void clear() { 
+        entries.clear(); 
+    }
+    
     public void addEntry( String path, String filesource  ) {
         entries.add( new PageMapperEntry(path, filesource) );
     }

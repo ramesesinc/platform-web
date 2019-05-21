@@ -49,8 +49,7 @@ public class AnubisStartupServlet extends HttpServlet {
                 throw new ServletException("Anubis startup failed. Cannot find the anubis.hosts file");
             
             
-            ProjectResolver resolver = new ProjectResolver(is);
-            appContext.setAttribute( ProjectResolver.class.getName(), resolver );
+            appContext.setAttribute( ProjectResolver.class.getName(), new ProjectResolver() );
         } catch(ServletException se) {
             throw se;
         } catch(Exception ex) {

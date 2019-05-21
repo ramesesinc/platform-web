@@ -40,5 +40,4 @@ public class ContentManager {
     public ContentProvider getContentProvider(String ext) {
         return providers.get( ext );
     }
-    
 }

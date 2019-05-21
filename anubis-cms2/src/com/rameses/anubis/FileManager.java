@@ -30,19 +30,20 @@ public class FileManager {
     public FileManager(Project project) {
         this.project = project;
     }
-
+    
     public File getFile(String name) {
         if (!files.containsKey(name)) {
-            //check first if file is requested from module or from the project
-
-            String moduleName = null;
+            String moduleName = null; 
             String fileName = name;
-            String[] arr = ProjectUtils.getModuleNameFromFile(name, project);
-            if (arr != null) {
-                moduleName = arr[0];
-                fileName = arr[1];
-            }
-
+            
+            AnubisContext actx = AnubisContext.getCurrentContext();
+            Module mod = actx.getModule(); 
+            if ( mod != null ) {
+                moduleName = mod.getName(); 
+                String skey = "/"+ moduleName; 
+                fileName = name.substring(skey.length()); 
+            }            
+            
             InputStream inp = findSource(fileName, moduleName);
             Map map = JsonUtil.toMap(StreamUtil.toString(inp));
 

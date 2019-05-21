@@ -2,8 +2,7 @@ package com.rameses.anubis.web;
 
 import com.rameses.anubis.AnubisContext;
 import com.rameses.anubis.Module;
-import com.rameses.anubis.PermalinkEntry;
-import com.rameses.anubis.PermalinkEntry.MatchResult;
+import com.rameses.anubis.PageMapperResult;
 import com.rameses.anubis.Project;
 import com.rameses.anubis.ProjectResolver;
 import java.io.IOException;
@@ -48,46 +47,47 @@ public abstract class AbstractAnubisServlet extends HttpServlet {
         WebAnubisContext wctx = new WebAnubisContext(app, hreq, hres);
         wctx.setAttribute("contextPath", hreq.getContextPath()); 
         AnubisContext.setContext(wctx);
-       
         
         try {
-            ProjectResolver resolver = (ProjectResolver)app.getAttribute( ProjectResolver.class.getName() );
-            
-            //resolve the project's name based on the pattern specified in anubis.hosts
-            String serverName = hreq.getServerName();
-            //find the project name parser.
-            PermalinkEntry np = resolver.findNameParser(serverName);
-            MatchResult mr = np.buildResult( serverName );
-            Project project =  resolver.getProjectFromUrl( mr.getResolvedPath() );
-            String lang = (String) mr.getTokens().get("lang");
+            ProjectResolver resolver = (ProjectResolver)app.getAttribute( ProjectResolver.class.getName() );            
+            Project project =  resolver.getProject(); 
             wctx.setProject( project );
-            wctx.setLang( lang );
             
             String pathInfo = hreq.getPathInfo();
             if( pathInfo !=null ) {
                 
                 //check if we need to reload
                 if (PROJECT_RELOAD_KEY.equals(pathInfo)) {
-                    resolver.removeProject(project.getUrl());
+                    resolver.removeProject();
                     redirect( hres, "/", hreq.getContextPath() ); 
                     return;
                 }
                 //determine the module if any
                 //determine also the module. to do this check module path if it exists
                 if( pathInfo.indexOf("/",1)>0) {
-                    String testModuleName = pathInfo.substring(1, pathInfo.indexOf("/",1));
-                    Module module = project.getModules().get(testModuleName);
-                    wctx.setModule( module );
+                    PageMapperResult pm = project.getPermalinkManager().resolve(pathInfo); 
+                    String smodule = pm.getModule(); 
+                    if ( smodule == null ) {
+                        String fpath = pm.getFilePath();
+                        fpath = (fpath.startsWith("/") ? fpath.substring(1) : fpath);
+                        
+                        String[] arr = fpath.split("/"); 
+                        String modname = arr[0]; 
+                        Module module = project.getModules().get(modname);
+                        if( module != null ) smodule = module.getName();
+                    }
+                    
+                    if ( smodule != null ) {
+                        Module module = project.getModules().get(smodule);
+                        if ( module == null ) 
+                            throw new IOException("Module "+ smodule +" does not exist"); 
+                        
+                        wctx.setModule(module); 
+                    }
                 }
             }
             
-            String libname = (String) project.get("anubis.lib");
-            if (libname == null)
-                libname = "/default";
-            else if (!libname.startsWith("/"))
-                libname = "/"+libname;
-            
-            wctx.setSystemUrl( config.getServletContext().getResource(libname).toString() );
+            wctx.setSystemUrl( config.getServletContext().getResource("/default").toString() );
             handle( hreq, hres );
             
             

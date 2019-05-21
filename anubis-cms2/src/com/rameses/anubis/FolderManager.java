@@ -73,28 +73,26 @@ public class FolderManager {
     public Folder getFolder(String name) 
     {
         AnubisContext ctx = AnubisContext.getCurrentContext();
-        if (!folders.containsKey(name)) 
-        {
+        Module modu = ctx.getModule();
+        if (!folders.containsKey(name)) {
             String moduleName = null;
             String fileName = name;
             
-            String[] arr = ProjectUtils.getModuleNameFromFile(name, project);
-            if(arr!=null) {
-                moduleName = arr[0];
-                fileName = arr[1];
+            if(modu!=null) {
+                moduleName = modu.getName(); 
+                fileName = name.substring(("/"+modu.getName()).length());
             }
             
             Set<String> urlNames = new LinkedHashSet();
             //check first if the requested file is from a module, else scan
             //through all files in folders
             if(moduleName!=null) {
-                Module mod = project.getModules().get(moduleName);
-                urlNames.addAll( scanFileNames(fileName, mod.getUrl(), fileName ) );
-                urlNames.addAll( scanFileNames(fileName,mod.getProvider(), fileName ));
+                urlNames.addAll( scanFileNames(fileName, modu.getUrl(), fileName ) );
+                urlNames.addAll( scanFileNames(fileName, modu.getProvider(), fileName ));
             } else {
                 urlNames.addAll( scanFileNames(fileName,project.getUrl(),fileName) );
                 urlNames.addAll( scanFileNames(fileName,ctx.getSystemUrl(), fileName) );
-                for(Module mod: project.getModules().values()) {
+                for( Module mod: project.getModules().values()) {
                     String pName = "/" + mod.getName() + fileName;
                     urlNames.addAll( scanFileNames(pName, mod.getUrl(), fileName) );
                     if(mod.getProvider()!=null) {

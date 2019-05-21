@@ -20,6 +20,4 @@ public abstract class ContentProvider {
 
     public abstract String getExt();
     public abstract InputStream getContent(File file, Map params) throws ResourceNotFoundException;
-
-    
 }

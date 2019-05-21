@@ -9,13 +9,7 @@
 
 package com.rameses.anubis;
 
-
-import com.rameses.io.LineReader;
-import com.rameses.io.LineReader.Handler;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
+import com.rameses.util.ConfigProperties;
 import java.util.Map;
 
 /**
@@ -24,75 +18,56 @@ import java.util.Map;
  */
 public class ProjectResolver {
     
-    private List<PermalinkEntry> nameParsers = new ArrayList();
-    private Map<String, Project> projects = new Hashtable();
-    private PermalinkEntry defaultNameParser;
+    private final static Object LOCKED = new Object();
+    
+    private Project project; 
+    private Boolean cached;
     
     /** Creates a new instance of ProjectResolver */
-    public ProjectResolver(InputStream is) {
-        //use line reader
-        LineReader ldr = new LineReader();
-        ldr.read( is, new Handler(){
-            public void read(String text) {
-                if(text==null || text.trim().length()<=0 || !text.contains("=")) return;
-                if( text.startsWith("#")) return;
-                
-                text = parse(text); 
-                String key = text.substring(0, text.indexOf("=")).trim();
-                String value = text.substring(text.indexOf("=")+1).trim();
-                
-                value = ContentUtil.replaceSysProperty(value);
-                
-                PermalinkEntry np = new PermalinkEntry(key, value);
-                nameParsers.add( np );   
-                if(key.equalsIgnoreCase("default")) {
-                    defaultNameParser = np;
+    public ProjectResolver() {
+    }
+    
+    public Project removeProject() {
+        synchronized( LOCKED ) {
+            Project old = this.project; 
+            this.project = null; 
+            return old; 
+        }
+    }  
+    
+    public boolean isCached() { 
+        if ( cached == null ) { 
+            try { 
+                String webcached = (System.getProperty("web.cached")+"").toLowerCase();
+                if ( webcached.matches("true|false")) {
+                    cached = new Boolean( webcached );
+                } 
+                else {
+                    String path = System.getProperty("osiris.base.dir") +"/webroot/project.conf"; 
+                    Map conf = new ConfigProperties(new java.io.File(path).toURI().toURL()).getProperties();
+                    cached = new Boolean( "true".equals( conf.get("cached")+"" ));
+                }
+            } catch(Throwable t) {
+                return true; 
+            }
+        }
+        return cached.booleanValue(); 
+    }
+    
+    public Project getProject() {
+        synchronized( LOCKED ) {
+            if ( project == null ) {
+                String webrootpath = System.getProperty("osiris.base.dir") +"/webroot"; 
+                try {
+                    java.io.File f = new java.io.File( webrootpath ); 
+                    project =  new Project("webroot", f.toURI().toURL().toString()); 
+                } catch(RuntimeException re) {
+                    throw re; 
+                } catch(Throwable t) {
+                    throw new RuntimeException(t); 
                 }
             }
-        });
-    }
-    
-    protected String parse(String text) {
-        //override here for expression values
-        return text; 
-    }
-    
-    /*
-    public Project findProject(String serverName) {
-        PermalinkEntry np = findNameParser(serverName);
-        MatchResult nr = np.buildResult( serverName );
-        return getProjectFromUrl( nr.getResolvedPath());
-    }
-     */
-    
-    //return only the first one that matches
-    public PermalinkEntry findNameParser(String path) {
-        for(PermalinkEntry np : nameParsers ) {
-           if( np.matches(path)) return np;
+            return project; 
         }
-        
-        //if name parser is not found, use default instead
-        if(defaultNameParser!=null) {
-            return defaultNameParser;
-        }
-        
-        throw new RuntimeException("Path does not match any registered patterns");
     }
-    
-    
-    public Project getProjectFromUrl(String urlName) {
-        if( projects.containsKey(urlName)) return projects.get(urlName);
-        //project name is gotten from the last substring token
-        String name = urlName.substring(urlName.lastIndexOf("/")+1);
-        Project project = new Project(name, urlName);
-        if(project.isCached()) {
-            projects.put( urlName, project );
-        }
-        return project;
-    }
-    
-    
-    public Project removeProject(String url) {
-        return projects.remove(url); 
-    }  
 }

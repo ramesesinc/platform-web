@@ -32,12 +32,21 @@ public class ActionManager {
     private List<MappingEntry> mappings = new ArrayList();
     private Map<String, List> cachedActions = new HashMap();
     
+    public void clear() {
+        actions.clear(); 
+        mappings.clear(); 
+        cachedActions.clear(); 
+    }
+    
     /**
      * 
      * @param conf 
      * added action-mapping because action-mapping can be remembered better
      */
     public void init(ConfigProperties conf) {
+        mappings.clear(); 
+        cachedActions.clear(); 
+        
         Map masters = new HashMap();
         Map _map1 = conf.getProperties( "page-action-mapping" );
         Map _map2 = conf.getProperties( "action-mapping" );
@@ -88,16 +97,14 @@ public class ActionManager {
     protected ActionCommand createActionCommand(final String name) throws Exception {
         AnubisContext ctx = AnubisContext.getCurrentContext();
         Project project = ctx.getProject();
+        Module mod = ctx.getModule(); 
 
-        
         String moduleName = null;
-        String action = name;
-        
+        String action = name;        
         if(action.indexOf("/")>0) {
-            String[] arr = ProjectUtils.getModuleNameFromFile( action, project );
-            if(arr != null ) {
-                moduleName = arr[0];
-                action = arr[1];
+            if( mod != null ) {
+                moduleName = mod.getName(); 
+                action = action.substring(("/"+ moduleName).length()); 
             }
         }
         
@@ -105,8 +112,7 @@ public class ActionManager {
         
         InputStream is = null;
         try {
-            if(moduleName!=null) {
-                Module mod =project.getModules().get(moduleName);
+            if( mod != null) {
                 urls.add( ContentUtil.correctUrlPath(  mod.getUrl(), ACTION_DIR, action) );
                 urls.add( ContentUtil.correctUrlPath( mod.getProvider() , ACTION_DIR , action) );
             } else {

@@ -30,28 +30,27 @@ public class MediaContentProvider extends ContentProvider {
         }
         
         AnubisContext ctx = AnubisContext.getCurrentContext();
+        Module modu = ctx.getModule();
         
         String path = file.getPath();
         String arr[] = path.split("\\.");
         path = arr[0] + "/" + block + "." + arr[1];
         
         String moduleName = null;
-        String[] arr2 = ProjectUtils.getModuleNameFromFile(path, ctx.getProject());
-        if(arr2!=null) {
-            moduleName = arr2[0];
-            path = arr2[1];
+        if (modu != null) {
+            moduleName = modu.getName(); 
+            path = path.substring(("/"+modu.getName()).length());
         }
         
         ArrayList<String> baseURLs = new ArrayList();
-        if(moduleName!=null) {
-            Module mod = ctx.getProject().getModules().get( moduleName );
+        if(modu!=null) {
             baseURLs.add( ctx.getProject().getUrl() +"/files/"+ moduleName );
             baseURLs.add( ctx.getProject().getUrl() +"/content/"+ moduleName );
-            baseURLs.add( mod.getUrl() + "/files" ); 
-            baseURLs.add( mod.getUrl() + "/content" ); 
-            if ( mod.getProvider() != null ) {
-                baseURLs.add( mod.getProvider() +"/files" ); 
-                baseURLs.add( mod.getProvider() +"/content" ); 
+            baseURLs.add( modu.getUrl() + "/files" ); 
+            baseURLs.add( modu.getUrl() + "/content" ); 
+            if ( modu.getProvider() != null ) {
+                baseURLs.add( modu.getProvider() +"/files" ); 
+                baseURLs.add( modu.getProvider() +"/content" ); 
             } 
         } else {
             baseURLs.add( ctx.getProject().getUrl() +"/files" );

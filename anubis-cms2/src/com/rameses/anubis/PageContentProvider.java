@@ -49,10 +49,7 @@ public class PageContentProvider extends ContentProvider {
         } catch(ResourceNotFoundException rnfe) {
             throw rnfe;
         }
-    }
-    
-    
-    
+    }    
     
     //SOURCE OF THE CONTENT
     private class PageContentCacheSource extends ContentTemplateSource {
@@ -61,16 +58,17 @@ public class PageContentProvider extends ContentProvider {
         }
         public InputStream getResource(String name) throws ResourceNotFoundException{
             AnubisContext ctx = AnubisContext.getCurrentContext();
-            ArrayList<String> basePaths = new ArrayList(); 
+            Module mod = ctx.getModule();
             String fname = name; 
             
-            if ( ctx.getModule() != null ) { 
-                String[] arr = ProjectUtils.getModuleNameFromFile( name, ctx.getProject() );
-                Module module = ctx.getModule(); 
-                fname = arr[1];        
-                basePaths.add( module.getUrl() );
-                if ( module.getProvider() != null ) {
-                    basePaths.add( module.getProvider() );
+            ArrayList<String> basePaths = new ArrayList(); 
+            
+            if ( mod != null ) { 
+                String skey = "/"+ mod.getName();
+                fname = name.substring( skey.length());
+                basePaths.add( mod.getUrl() );
+                if ( mod.getProvider() != null ) {
+                    basePaths.add( mod.getProvider() );
                 }
             } else {
                 basePaths.add( ctx.getProject().getUrl());

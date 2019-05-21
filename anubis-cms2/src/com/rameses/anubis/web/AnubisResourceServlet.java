@@ -15,6 +15,7 @@ import com.rameses.anubis.Module;
 
 import com.rameses.anubis.Project;
 import com.rameses.anubis.ProjectUtils;
+import com.rameses.anubis.ResourceNotFoundException;
 import java.io.InputStream;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -45,21 +46,29 @@ public class AnubisResourceServlet extends AbstractAnubisServlet
         String path = hreq.getPathInfo();
         String mimeType = app.getMimeType( path );
         InputStream is = null; 
-             
+
         try 
         {
             Project project = ctx.getProject(); 
-            String[] arr = ProjectUtils.getModuleNameFromFile( path, project );
-            if(arr!=null) {
-                String modulename = arr[0];
-                String pathname = arr[1];
-                Module module = project.getModules().get( modulename );
-                is = ContentUtil.getResources(  new String[]{
-                    module.getUrl() + basePath + pathname,
-                    module.getProvider() + basePath + pathname
-                }, path);
+            String[] arr = path.substring(1).split("/"); 
+            Module mod = project.getModules().get(arr[0]); 
+            if ( mod != null ) {
+                String modulename = mod.getName(); 
+                String skey = "/"+ mod.getName(); 
+                String pathname = path.substring( skey.length()); 
+                
+                try {
+                    is = ContentUtil.getResources(  new String[]{
+                        mod.getUrl() + basePath + pathname,
+                        mod.getProvider() + basePath + pathname
+                    }, path);
+                } 
+                catch(ResourceNotFoundException nfe) {
+                    path = pathname; 
+                }
             }
-            else {
+            
+            if ( is == null ) {
                 is = ContentUtil.getResources( new String[]{
                     project.getUrl()+ "/" + basePath + path,
                     ctx.getSystemUrl() + "/"+ basePath + path
@@ -67,13 +76,16 @@ public class AnubisResourceServlet extends AbstractAnubisServlet
             }
             
             if (is != null) {
-                String smimetype = project.getMimeTypeManager().getMimeType( path );
-                if (smimetype != null) mimeType = smimetype;
+//                String smimetype = project.getMimeTypeManager().getMimeType( path );
+//                if (smimetype != null) mimeType = smimetype;
                                 
                 //System.out.println("path=" + path + ", mimetype="+ mimeType);
                 ResponseUtil.write( hreq, hres, mimeType, is );
             }
         } 
+        catch(ResourceNotFoundException nfe) {
+            System.out.println("resource not found "+ path);
+        }
         catch(Exception e) {
             System.out.println("error resource " + e.getMessage()); 
         } 

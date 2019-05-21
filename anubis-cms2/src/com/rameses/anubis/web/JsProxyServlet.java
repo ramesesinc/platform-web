@@ -44,10 +44,11 @@ public class JsProxyServlet extends AbstractAnubisServlet {
             String serviceName    = (arr.length >= 3? arr[2]: arr[1]);
             serviceName = serviceName.substring(0, serviceName.indexOf("."));
             Module module = actx.getModule();
-            if(module!=null) {
+            if ( module != null ) {
                 actx.getConnectionContext().setModule( module );
             }
-            
+
+            String modname = (module == null ? null : module.getName());
             Map info = project.getServiceManager().getClassInfo( connection+"/"+serviceName );
             StringWriter w = new StringWriter();
             if ( info !=null ) writeJs( info, w );

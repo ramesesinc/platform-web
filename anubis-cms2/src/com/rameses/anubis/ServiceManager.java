@@ -32,6 +32,11 @@ public class ServiceManager {
         }
     }
     
+    public void clear() {
+        cache.clear(); 
+        infoCache.clear(); 
+    }
+    
     private Map findAdapterInfo(String confName ) {
         return findAdapterInfo(confName,  null);
     }
@@ -99,6 +104,10 @@ public class ServiceManager {
     }
     
     public Map getClassInfo(String name) {
+        return getClassInfo( name, null ); 
+    }
+    
+    public Map getClassInfo(String name, String module) {
         if(infoCache.containsKey(name) ) return infoCache.get(name);
         String confName = name.substring(0, name.indexOf("/"));
         String svcName = name.substring( name.indexOf("/") + 1);
@@ -136,19 +145,22 @@ public class ServiceManager {
                     module.getProvider() +  SERVICE_DIR + "/" + name
                 }, name );
             } 
-            else {
-                Project project = ctx.getProject();
-                return ContentUtil.findJsonResource( new String[]{
-                    project.getUrl() + "/" + SERVICE_DIR +  "/" + name
-                }, name );
-            }
+        } catch(Throwable t) {
+            //do nothing 
+        }
+        
+        try {
+            Project project = ctx.getProject();
+            return ContentUtil.findJsonResource( new String[]{
+                project.getUrl() + "/" + SERVICE_DIR +  "/" + name
+            }, name ); 
         } 
-        catch(RuntimeException re) {
-            throw re;
-        }
-        catch(Exception e) {
-            throw new RuntimeException(e);
-        }
+        catch(RuntimeException re) { 
+            throw re; 
+        } 
+        catch(Exception e) { 
+            throw new RuntimeException(e); 
+        } 
     }
     
     public ServiceAdapter[] getServiceAdapters() {
