@@ -2,6 +2,7 @@ package com.rameses.anubis.web;
 
 import com.rameses.anubis.AnubisContext;
 import com.rameses.anubis.File;
+import com.rameses.anubis.PageMapperResult;
 import com.rameses.anubis.PermalinkManager;
 import com.rameses.anubis.Project;
 import com.rameses.anubis.SessionContext;
@@ -86,7 +87,13 @@ public class AnubisMainServlet extends AbstractAnubisServlet {
             //check if filename matches permalinks. if secured,
             //use secured permalinks instead
             PermalinkManager permalink = project.getPermalinkManager();
-            String resolvedName = permalink.resolveName( fullPath, params  );
+            PageMapperResult pm = permalink.resolve( fullPath, params );
+            String smod = pm.getModule(); 
+            if (smod != null) {
+                actx.setModule( project.getModules().get(smod)); 
+            }
+            
+            String resolvedName = pm.getFilePath(); 
             if ( resolvedName != null ) filename = resolvedName;
             
             file = project.getFileManager().getFile( filename );

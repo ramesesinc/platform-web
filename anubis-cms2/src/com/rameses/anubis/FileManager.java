@@ -48,7 +48,13 @@ public class FileManager {
             Map map = JsonUtil.toMap(StreamUtil.toString(inp));
 
             map.put("id", name);
-            map.put("ext", name.substring(name.lastIndexOf(".") + 1));
+            
+            if ( name.lastIndexOf('.') > 0 ) {
+                map.put("ext", name.substring(name.lastIndexOf(".") + 1));
+            } else {
+                map.put("ext", "pg");
+            }
+            
 
             //check if file has items. This is done by checking if folders exist.
             //calculate the parent path
@@ -71,7 +77,10 @@ public class FileManager {
             }
 
             //set path
-            String path = name.substring(0, name.lastIndexOf("."));
+            String path = name; 
+            if ( name.lastIndexOf('.') > 0 ) {
+                path = name.substring(0, name.lastIndexOf('.'));
+            }            
             map.put("path", path);
 
             //set secured
@@ -92,7 +101,12 @@ public class FileManager {
                 if ( name.charAt(0) == '/' ) {
                     idx = 1; 
                 }
-                map.put("name", name.substring(idx, name.lastIndexOf(".")).replace("/", "-"));
+                if ( name.lastIndexOf('.') > 0 ) {
+                    map.put("name", name.substring(idx, name.lastIndexOf(".")).replace("/", "-"));
+                } else {
+                    map.put("name", name.substring(idx).replace("/", "-"));
+                }
+                
             }
 
             if (!map.containsKey("hidden")) {
@@ -104,9 +118,15 @@ public class FileManager {
             }
 
             int startIdx = name.lastIndexOf('/'); 
-            int endIdx = name.lastIndexOf('.'); 
             startIdx = (startIdx < 0 ? 0 : startIdx+1); 
-            map.put("pagename", name.substring(startIdx, endIdx));
+            
+            int endIdx = name.lastIndexOf('.'); 
+            if ( endIdx > 0 ) {
+                map.put("pagename", name.substring(startIdx, endIdx));
+            } else {
+                map.put("pagename", name.substring(startIdx));
+            }
+            
 
             if (!map.containsKey("hashid")) {
                 String hname = (String) map.get("name");

@@ -57,6 +57,12 @@ public class PermalinkManager {
     }
     
     public PageMapperResult resolve( String path ) {
-        return mapper.getFileSource(path); 
+        return resolve( path, null );
+    }
+    
+    public PageMapperResult resolve( String path, Map params ) {
+        PageMapperResult res = mapper.getFileSource(path); 
+        if ( params != null ) params.putAll( res.getParams() ); 
+        return res; 
     }
 }
