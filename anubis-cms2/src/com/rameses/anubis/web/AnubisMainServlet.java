@@ -96,7 +96,7 @@ public class AnubisMainServlet extends AbstractAnubisServlet {
             String resolvedName = pm.getFilePath(); 
             if ( resolvedName != null ) filename = resolvedName;
             
-            file = project.getFileManager().getFile( filename );
+            file = project.getFileManager().getFile( filename, fullPath );
         } 
         catch(com.rameses.anubis.FileNotFoundException fe) { 
             hres.setStatus( HttpServletResponse.SC_NOT_FOUND ); 

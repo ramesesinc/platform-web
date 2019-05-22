@@ -31,41 +31,59 @@ public class FileManager {
         this.project = project;
     }
     
-    public File getFile(String name) {
-        if (!files.containsKey(name)) {
+    public File getFile(String fileSource) {
+        return getFile(fileSource, null);
+    }
+    public File getFile(String fileSource, String pathInfo) {
+        if (!files.containsKey(fileSource)) {
+            String fileName = fileSource;
             String moduleName = null; 
-            String fileName = name;
             
             AnubisContext actx = AnubisContext.getCurrentContext();
             Module mod = actx.getModule(); 
             if ( mod != null ) {
                 moduleName = mod.getName(); 
                 String skey = "/"+ moduleName; 
-                fileName = name.substring(skey.length()); 
-            }            
+                if ( fileSource.startsWith(skey)) {
+                    fileName = fileSource.substring(skey.length()); 
+                } 
+            } 
             
             InputStream inp = findSource(fileName, moduleName);
             Map map = JsonUtil.toMap(StreamUtil.toString(inp));
 
-            map.put("id", name);
+            if ( pathInfo == null || pathInfo.trim().length()==0 ) {
+                pathInfo = fileSource;
+            }
+            map.put("id", pathInfo);            
             
+            String name = fileSource;
             if ( name.lastIndexOf('.') > 0 ) {
                 map.put("ext", name.substring(name.lastIndexOf(".") + 1));
             } else {
                 map.put("ext", "pg");
             }
             
+            map.put("fileSource", fileName);
+            
+            //set path
+            String path = pathInfo; 
+            if ( pathInfo.lastIndexOf('.') > 0 ) {
+                path = pathInfo.substring(0, pathInfo.lastIndexOf('.'));
+            }            
+            map.put("path", path);
 
             //check if file has items. This is done by checking if folders exist.
             //calculate the parent path
             String parentPath = null; 
-            if ( name.lastIndexOf('/') > 0 ) {
-                parentPath = name.substring(0, name.lastIndexOf("/"));
+            if ( path.lastIndexOf('/') > 0 ) {
+                parentPath = path.substring(0, path.lastIndexOf("/"));
             }
             if (parentPath == null || parentPath.trim().length() == 0) {
                 parentPath = "/";
             }
             map.put("parentPath", parentPath);
+            
             if (moduleName != null) {
                 map.put("module", moduleName);
             }
@@ -76,12 +94,6 @@ public class FileManager {
                 map.put("sortorder", 0);
             }
 
-            //set path
-            String path = name; 
-            if ( name.lastIndexOf('.') > 0 ) {
-                path = name.substring(0, name.lastIndexOf('.'));
-            }            
-            map.put("path", path);
 
             //set secured
             if (!map.containsKey("secured")) {
@@ -98,13 +110,13 @@ public class FileManager {
 
             if (!map.containsKey("name")) { 
                 int idx = 0; 
-                if ( name.charAt(0) == '/' ) {
+                if ( pathInfo.charAt(0) == '/' ) {
                     idx = 1; 
                 }
-                if ( name.lastIndexOf('.') > 0 ) {
-                    map.put("name", name.substring(idx, name.lastIndexOf(".")).replace("/", "-"));
+                if ( pathInfo.lastIndexOf('.') > 0 ) {
+                    map.put("name", pathInfo.substring(idx, pathInfo.lastIndexOf(".")).replace("/", "-"));
                 } else {
-                    map.put("name", name.substring(idx).replace("/", "-"));
+                    map.put("name", pathInfo.substring(idx).replace("/", "-"));
                 }
                 
             }
@@ -127,14 +139,13 @@ public class FileManager {
                 map.put("pagename", name.substring(startIdx));
             }
             
-
             if (!map.containsKey("hashid")) {
                 String hname = (String) map.get("name");
                 map.put("hashid", hname);
             }
-            files.put(name, new File(map));
+            files.put(fileSource, new File(map));
         }
-        return files.get(name);
+        return files.get(fileSource);
     }
 
     public void clear() {

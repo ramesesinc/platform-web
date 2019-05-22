@@ -131,4 +131,8 @@ public class File extends HashMap implements Comparable {
     public String getParentPath() {
         return (String)super.get("parentPath");
     }
+    
+    public String getFileSource() {
+        return (String)super.get("fileSource");
+    }
 }

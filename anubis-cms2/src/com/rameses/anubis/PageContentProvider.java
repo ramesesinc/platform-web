@@ -41,7 +41,7 @@ public class PageContentProvider extends ContentProvider {
         
         String result  = "";        
         try {
-            ContentTemplate ct = project.getTemplateCache().getTemplate( file.getPath(), contentSource );
+            ContentTemplate ct = project.getTemplateCache().getTemplate( file.getFileSource(), contentSource );
             result = ct.render( pmap  );
             pmap.put("content", result );
             result = project.getTemplateManager().applyTemplates( file, pmap );
@@ -64,8 +64,8 @@ public class PageContentProvider extends ContentProvider {
             ArrayList<String> basePaths = new ArrayList(); 
             
             if ( mod != null ) { 
-                String skey = "/"+ mod.getName();
-                fname = name.substring( skey.length());
+                //String skey = "/"+ mod.getName();
+                //fname = name.substring( skey.length());
                 basePaths.add( mod.getUrl() );
                 if ( mod.getProvider() != null ) {
                     basePaths.add( mod.getProvider() );

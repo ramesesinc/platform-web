@@ -181,6 +181,7 @@ public class Project extends HashMap  {
             br = new BufferedReader(new InputStreamReader( url.openStream()));
             while ((text=br.readLine()) != null) {
                 if ( text.trim().length() == 0 ) continue; 
+                if ( text.trim().startsWith("#")) continue;
                 
                 String[] arr = text.split("=");
                 String key = arr[0].trim();
