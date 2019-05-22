@@ -64,7 +64,7 @@ public class FileManager {
                 map.put("ext", "pg");
             }
             
-            map.put("fileSource", fileName);
+            map.put("filePath", fileName);
             
             //set path
             String path = pathInfo; 

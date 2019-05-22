@@ -41,7 +41,7 @@ public class PageContentProvider extends ContentProvider {
         
         String result  = "";        
         try {
-            ContentTemplate ct = project.getTemplateCache().getTemplate( file.getFileSource(), contentSource );
+            ContentTemplate ct = project.getTemplateCache().getTemplate( file.getFilePath(), contentSource );
             result = ct.render( pmap  );
             pmap.put("content", result );
             result = project.getTemplateManager().applyTemplates( file, pmap );
