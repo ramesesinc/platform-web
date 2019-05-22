@@ -70,7 +70,11 @@ public class FolderManager {
         return items;
     }
     
-    public Folder getFolder(String name) 
+    public Folder getFolder(String name) {
+        return getFolder(name, false);
+    }
+    
+    public Folder getFolder(String name, boolean scanAll) 
     {
         AnubisContext ctx = AnubisContext.getCurrentContext();
         Module modu = ctx.getModule();
@@ -78,7 +82,10 @@ public class FolderManager {
             String moduleName = null;
             String fileName = name;
             
-            if(modu!=null) {
+            if (scanAll) {
+                //scan everything 
+            }
+            else if(modu!=null) {
                 moduleName = modu.getName(); 
                 fileName = name.substring(("/"+modu.getName()).length());
             }
