@@ -52,7 +52,11 @@ public class FolderManager {
                         
                     } else {
                         if (f.getExt()!=null && f.getExt().equals("conf")) return;
-                        if (!f.getFileName().endsWith(".pg")) return;
+                        
+                        if (f.getFileName().equals("info")) {
+                            //proceed to next step
+                        }                        
+                        else if (!f.getFileName().endsWith(".pg")) return;
                         
                         fname = f.getFileName(); 
                     }
@@ -61,7 +65,7 @@ public class FolderManager {
                         String pName = prefixName;
                         if(!pName.equals("/")) pName = pName ;
                         if(!pName.endsWith("/")) pName = pName + "/";
-                        items.add( pName +  fname );
+                        items.add( pName +  fname );   
                     }
                 }
             });
@@ -76,11 +80,11 @@ public class FolderManager {
     
     public Folder getFolder(String name, boolean scanAll) 
     {
-        AnubisContext ctx = AnubisContext.getCurrentContext();
-        Module modu = ctx.getModule();
+        AnubisContext ctx = AnubisContext.getCurrentContext();        
         if (!folders.containsKey(name)) {
             String moduleName = null;
             String fileName = name;
+            Module modu = ctx.getModule();
             
             if (scanAll) {
                 //scan everything 
@@ -93,17 +97,17 @@ public class FolderManager {
             Set<String> urlNames = new LinkedHashSet();
             //check first if the requested file is from a module, else scan
             //through all files in folders
-            if(moduleName!=null) {
-                urlNames.addAll( scanFileNames(fileName, modu.getUrl(), fileName ) );
-                urlNames.addAll( scanFileNames(fileName, modu.getProvider(), fileName ));
-            } else {
+            if(modu!=null && !scanAll) {
+                for (String s : scanFileNames(fileName, modu.getUrl(), fileName )) {
+                    urlNames.add( modu.getName()+":"+ s);
+                }
+            } 
+            else {
                 urlNames.addAll( scanFileNames(fileName,project.getUrl(),fileName) );
                 urlNames.addAll( scanFileNames(fileName,ctx.getSystemUrl(), fileName) );
                 for( Module mod: project.getModules().values()) {
-                    String pName = "/" + mod.getName() + fileName;
-                    urlNames.addAll( scanFileNames(pName, mod.getUrl(), fileName) );
-                    if(mod.getProvider()!=null) {
-                        urlNames.addAll( scanFileNames(pName, mod.getProvider(), fileName) );
+                    for (String s : scanFileNames(fileName, mod.getUrl(), fileName )) {                        
+                        urlNames.add( mod.getName()+":"+ s);
                     }
                 }
             }
@@ -111,7 +115,21 @@ public class FolderManager {
             Folder folder = new Folder(name, new HashMap());
             for (String s: urlNames) {
                 try {
-                    File f = project.getFileManager().getFile( s );
+                    String path = s; 
+                    if ( path.endsWith("/info")) {
+                        path = path.substring( 0, path.lastIndexOf("/info"));
+                    } 
+                    
+                    Module mod = null; 
+                    String modname = null; 
+                    String fname = path; 
+                    if ( path.indexOf(':') > 0) {
+                        modname = path.substring(0, path.indexOf(':')); 
+                        fname = path.substring( path.indexOf(':')+1); 
+                        mod = project.getModules().get(modname);
+                    }
+                    
+                    File f = project.getFileManager().getFile( fname, path, mod );
                     if (!f.isHidden()) folder.getChildren().add( f );
                 } catch(Throwable e) {
                     e.printStackTrace();
@@ -134,16 +152,26 @@ public class FolderManager {
         {
             Set<String> urlNames = new LinkedHashSet();
             Module mod = project.getModules().get(moduleName);
-            urlNames.addAll( scanFileNames(name, mod.getUrl(), name) );
-            urlNames.addAll( scanFileNames(name, mod.getProvider(), name) );
+            for (String s : scanFileNames(name, mod.getUrl(), name )) {
+                urlNames.add( mod.getName()+":"+ s);
+            }
             
             Folder folder = new Folder(sname, new HashMap());            
             for (String s: urlNames) 
             {
                 try 
                 {
-                    String spath = "/" + moduleName + s;
-                    File f = project.getFileManager().getFile( spath );
+                    String path = s; 
+                    if ( path.endsWith("/info")) {
+                        path = path.substring( 0, path.lastIndexOf("/info"));
+                    } 
+                    
+                    String fname = path; 
+                    if ( path.indexOf(':') > 0) {
+                        fname = path.substring( path.indexOf(':')+1); 
+                    }
+                    
+                    File f = project.getFileManager().getFile( fname, path, mod );
                     if (!f.isHidden()) folder.getChildren().add( f );
                 } 
                 catch(Exception e) {

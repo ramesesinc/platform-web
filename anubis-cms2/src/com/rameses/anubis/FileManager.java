@@ -35,12 +35,18 @@ public class FileManager {
         return getFile(fileSource, null);
     }
     public File getFile(String fileSource, String pathInfo) {
-        if (!files.containsKey(fileSource)) {
+        AnubisContext actx = AnubisContext.getCurrentContext();
+        return getFile( fileSource, pathInfo, actx.getModule());
+    }
+    
+    public File getFile(String fileSource, String pathInfo, Module mod) {
+        if ( pathInfo == null || pathInfo.trim().length()==0 ) {
+            pathInfo = fileSource;
+        }
+        if (!files.containsKey(pathInfo)) {
             String fileName = fileSource;
             String moduleName = null; 
             
-            AnubisContext actx = AnubisContext.getCurrentContext();
-            Module mod = actx.getModule(); 
             if ( mod != null ) {
                 moduleName = mod.getName(); 
                 String skey = "/"+ moduleName; 
@@ -52,9 +58,6 @@ public class FileManager {
             InputStream inp = findSource(fileName, moduleName);
             Map map = JsonUtil.toMap(StreamUtil.toString(inp));
 
-            if ( pathInfo == null || pathInfo.trim().length()==0 ) {
-                pathInfo = fileSource;
-            }
             map.put("id", pathInfo);            
             
             String name = fileSource;
@@ -143,9 +146,9 @@ public class FileManager {
                 String hname = (String) map.get("name");
                 map.put("hashid", hname);
             }
-            files.put(fileSource, new File(map));
+            files.put(pathInfo, new File(map));
         }
-        return files.get(fileSource);
+        return files.get(pathInfo);
     }
 
     public void clear() {
