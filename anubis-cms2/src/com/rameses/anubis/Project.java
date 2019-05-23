@@ -14,6 +14,7 @@ import com.rameses.util.ConfigProperties;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
@@ -90,8 +91,8 @@ public class Project extends HashMap  {
         blockManager.init( conf ); 
         actionManager.init( conf ); 
         
-        loadThemes();
         loadModules();
+        loadThemes();
 
         templateManager.init( conf ); 
         permalinkManager.init( conf ); 
@@ -108,21 +109,48 @@ public class Project extends HashMap  {
          */
     }
     
+    private class MetaInfo {
+        private String moduleName;
+        private String path; 
+        
+        MetaInfo (String path, String moduleName) {
+            this.path = path;
+            this.moduleName = moduleName;
+        }
+    }
     
     private void loadThemes() {
         themes.clear();
-        try {
-            String path = ContentUtil.correctUrlPath( getUrl(), null, "themes" );
-            FileDir.scan(path, new FileFilter(){
-                public void handle(FileDir.FileInfo f) {
-                    URL conf = f.getSubfile("theme.conf");
-                    Theme theme = new Theme(f.getName(), f.getUrl().toString());
-                    themes.put(theme.getName(), theme);
-                }
-            });
-        } catch(Exception warn) {
-            //System.out.println("WARNING. Theme loading error->"+warn.getMessage());
+        
+        ArrayList<MetaInfo> metas = new ArrayList(); 
+        metas.add( new MetaInfo( ContentUtil.correctUrlPath( getUrl(), null, "themes" ), null ));
+        for (Module mod : getModules().values()) {
+            metas.add( new MetaInfo(ContentUtil.correctUrlPath( mod.getUrl(), null, "themes" ), mod.getName()));
         }
+        
+        final MetaInfo[] mm = new MetaInfo[1];
+        for (MetaInfo meta : metas) {
+            try { 
+                mm[0] = meta;
+                FileDir.scan(meta.path, new FileFilter(){
+                    public void handle(FileDir.FileInfo f) {
+                        if ( !f.isDir()) return; 
+                        URL conf = f.getSubfile("theme.conf");
+                        Theme theme = themes.get( f.getName()); 
+                        if ( theme == null ) {
+                            theme = new Theme(f.getName(), f.getUrl().toString());
+                            themes.put(theme.getName(), theme);
+                        }
+                        else {
+                            theme.addResource(f.getUrl().toString(), mm[0].moduleName);
+                        }
+                    }
+                });
+            } catch(Throwable warn) {
+                //do nothing
+            }            
+        }
+        
     }
     
     private void loadModules() {
@@ -154,7 +182,14 @@ public class Project extends HashMap  {
                 
                 String[] arr = text.split("=");
                 String key = arr[0].trim();
-                String val = arr[1].trim();
+                String val = arr[1].trim();                
+                
+                try {
+                    new URL(val +"/module.conf").openStream(); 
+                } catch(Throwable t) {
+                    continue; 
+                }
+                
                 try {
                     Module mod = new Module(key, new URL(val+"/").toString()); 
                     mod.setProject( this ); 

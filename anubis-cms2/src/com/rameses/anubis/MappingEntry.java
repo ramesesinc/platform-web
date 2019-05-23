@@ -7,10 +7,16 @@ public class MappingEntry {
     
     private String pattern;
     private String[] templates;
+    private String moduleName;
     
     public MappingEntry(String pattern, String smasters) {
+        this( pattern, smasters, null); 
+    }
+    
+    public MappingEntry(String pattern, String smasters, String moduleName) {
         pattern = pattern.trim();
         if(!pattern.startsWith("/")) pattern = "/" + pattern;
+        
         smasters = smasters.trim();
         if(smasters.startsWith("/")) smasters = smasters.substring(1);
         
@@ -22,6 +28,8 @@ public class MappingEntry {
         for (int i = 0; i<str.length; i++) {
             this.templates[i] = str[strlen-i-1].trim();
         }
+        
+        this.moduleName = moduleName; 
     }
     
     public String getPattern() {
@@ -30,6 +38,10 @@ public class MappingEntry {
     
     public String[] getTemplates() {
         return templates;
+    }
+    
+    public String getModuleName() {
+        return moduleName;
     }
     
     public boolean matches(String path) {

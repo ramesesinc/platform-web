@@ -11,11 +11,13 @@ package com.rameses.anubis;
 
 import com.rameses.anubis.FileDir.FileFilter;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -87,12 +89,12 @@ public class FolderManager {
     public Folder getFolder(String name, String moduleName){
         if (!folders.containsKey(name)) {
             AnubisContext ctx = AnubisContext.getCurrentContext(); 
-            boolean allowCache = ctx.getProject().isCached();             
+            boolean allowCache = project.isCached();             
             String fileName = name;
             
             Module modu = null;
             if ( moduleName != null ) {
-                modu = ctx.getProject().getModules().get( moduleName );
+                modu = project.getModules().get( moduleName );
             }
             
             if ( modu != null ) { 
@@ -149,6 +151,65 @@ public class FolderManager {
             folders.put(name, folder);
         }
         return folders.get(name);
+    }
+    
+    
+    private class URLInfo {
+        private String url;
+        private String name; 
+        private Module module;
+        
+        public URLInfo( String name, String url, Module module ) {
+            this.name = null; 
+            this.url = url; 
+            this.module = module;
+        }
+    }
+    public List<File> getFiles( String name ) {
+        AnubisContext ctx = AnubisContext.getCurrentContext(); 
+        ArrayList<URLInfo> paths = new ArrayList();
+        paths.add( new URLInfo(name, project.getUrl(), null));
+        paths.add( new URLInfo(name, ctx.getSystemUrl(), null));
+        for( Module mod: project.getModules().values()) {
+            paths.add( new URLInfo(name, mod.getUrl(), mod)); 
+        }
+        
+        ArrayList<File> files = new ArrayList(); 
+        for (URLInfo info : paths) {
+            StringBuilder sb = new StringBuilder(); 
+            sb.append( info.url +"/files/"+ name ); 
+            if ( !sb.toString().endsWith(".pg")) {
+                sb.append(".pg");
+            }
+            sb.append("/info");
+            
+            URL u = null; 
+            try {
+                u = new URL(sb.toString()); 
+                u.openStream(); 
+            } catch(Throwable t) {
+                continue; 
+            }
+            
+            StringBuilder pathInfo = new StringBuilder(); 
+            if ( info.module != null ) {
+                pathInfo.append( info.module.getName() +":"+ name );
+            } else {
+                pathInfo.append( name ); 
+            }
+            
+            File file = null; 
+            try {
+                file = project.getFileManager().getFile(name, pathInfo.toString(), info.module); 
+            } catch(Throwable t) {
+                continue; 
+            } 
+            
+            if ( file != null && !file.isHidden()) {
+                files.add( file ); 
+            }
+        }
+        return files; 
     }
 
     public File findFirstVisibleFile(String s) {

@@ -10,7 +10,9 @@
 package com.rameses.anubis;
 
 import com.rameses.util.ConfigProperties;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  *
@@ -20,11 +22,14 @@ public class Theme extends HashMap {
     
     private ConfigProperties conf;
     
+    private ArrayList<ResourceInfo> resources;
+    
     public Theme(String name, String url) {
         conf = ContentUtil.getConf( url + "/theme.conf" );
         super.putAll(conf.getProperties());
         super.put("name",name );
         super.put("url", url);
+        this.resources = new ArrayList(); 
     }
     
     public String getName() {
@@ -43,4 +48,28 @@ public class Theme extends HashMap {
         return (String)super.get("licenseKey");
     }
     
+    public String getModuleName() {
+        return (String)super.get("moduleName"); 
+    }
+    
+    public void addResource( String url, String moduleName ) { 
+        ResourceInfo info = new ResourceInfo(); 
+        info.moduleName = moduleName; 
+        info.url = url; 
+        resources.add( info ); 
+    }
+    
+    public List<String> getPaths() {
+        ArrayList<String> paths = new ArrayList(); 
+        for (ResourceInfo info : resources) {
+            paths.add( info.url ); 
+        }
+        paths.add( getUrl()); 
+        return paths;
+    }
+    
+    private class ResourceInfo {
+        String url;
+        String moduleName;
+    }
 }

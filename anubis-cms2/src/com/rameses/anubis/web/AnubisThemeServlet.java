@@ -45,16 +45,16 @@ public class AnubisThemeServlet extends AbstractAnubisServlet {
         
         InputStream is = null;
         try {
-            String systemUrl = ctx.getSystemUrl();
             List<String> list = new ArrayList();
             Theme theme = project.getDefaultTheme();
-
-            if( theme !=null ) {
-                list.add( theme.getUrl()+resName );
-                list.add( theme.getProvider()+resName );
+            if( theme != null ) {
+                for (String spath : theme.getPaths()) {
+                    list.add( spath +"/"+ resName ); 
+                } 
             }
-            list.add( systemUrl +"/theme/"+  resName);
-            is = ContentUtil.getResources((String[])list.toArray(new String[]{}), resName);
+            list.add( ctx.getSystemUrl() +"/theme/"+  resName);
+            
+            is = ContentUtil.getResources(list.toArray(new String[]{}), resName);
             if (is != null) ResponseUtil.write(hreq,hres,mimeType,is);
         } 
         catch(Exception e) {

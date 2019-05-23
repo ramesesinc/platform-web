@@ -12,9 +12,10 @@ package com.rameses.anubis;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
 
 
 
@@ -136,6 +137,16 @@ public class ContentMap extends HashMap {
             return null; 
         } 
     }    
+    
+    public List<File> getFiles( String name ) {
+        try {
+            Project project = AnubisContext.getCurrentContext().getProject();
+            return project.getFolderManager().getFiles(name);
+        } 
+        catch(Throwable e) { 
+            return new ArrayList(); 
+        } 
+    }
     
     public File getFile(String name) {
         try {
