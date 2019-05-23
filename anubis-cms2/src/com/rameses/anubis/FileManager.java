@@ -43,7 +43,11 @@ public class FileManager {
         if ( pathInfo == null || pathInfo.trim().length()==0 ) {
             pathInfo = fileSource;
         }
+        
         if (!files.containsKey(pathInfo)) {
+            AnubisContext actx = AnubisContext.getCurrentContext();
+            boolean allowCache = actx.getProject().isCached();
+            
             String fileName = fileSource;
             String moduleName = null; 
             
@@ -146,7 +150,11 @@ public class FileManager {
                 String hname = (String) map.get("name");
                 map.put("hashid", hname);
             }
-            files.put(pathInfo, new File(map));
+            if ( allowCache ) {
+                files.put(pathInfo, new File(map));
+            } else {
+                return new File(map); 
+            }
         }
         return files.get(pathInfo);
     }

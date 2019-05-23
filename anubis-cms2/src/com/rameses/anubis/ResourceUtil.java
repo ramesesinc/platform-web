@@ -23,6 +23,10 @@ class ResourceUtil {
             URL baseURL = createURL0(basePath, null); 
             for ( String fname : fileNames ) { 
                 URL url = baseURL; 
+                if ( fname.startsWith("/")) {
+                    fname = fname.substring(1); 
+                }
+                
                 String[] arr = fname.split("/"); 
                 for ( int i=0; i<arr.length; i++ ) {  
                     url = findResource( url, arr[i] );  

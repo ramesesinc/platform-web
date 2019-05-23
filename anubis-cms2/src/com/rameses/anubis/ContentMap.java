@@ -124,28 +124,25 @@ public class ContentMap extends HashMap {
     }
     
     public Folder getFolder( String name ) {
-        return getFolder(name, true); 
+        return getFolder(name, null); 
     }
 
     public Folder getFolder( String name, boolean scanAll ) {
-        try 
-        {
+        try {
             Project project = AnubisContext.getCurrentContext().getProject();
             return project.getFolderManager().getFolder(name, scanAll);
         } 
-        catch(Exception e) { 
+        catch(Throwable e) { 
             return null; 
         } 
     }
 
-    public Folder getFolder( String name, String moduleName ) 
-    {
-        try 
-        {
+    public Folder getFolder( String name, String moduleName ) {
+        try {
             Project project = AnubisContext.getCurrentContext().getProject();
             return project.getFolderManager().getFolder(name, moduleName);
         } 
-        catch(Exception e) { 
+        catch(Throwable e) { 
             return null; 
         } 
     }    
@@ -154,7 +151,7 @@ public class ContentMap extends HashMap {
         try {
             Project project = AnubisContext.getCurrentContext().getProject();
             return project.getFileManager().getFile(name);
-        } catch(Exception e){
+        } catch(Throwable e){
             return null;
         }
     }

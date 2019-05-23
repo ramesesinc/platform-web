@@ -52,7 +52,6 @@ public class FolderManager {
                         
                     } else {
                         if (f.getExt()!=null && f.getExt().equals("conf")) return;
-                        
                         if (f.getFileName().equals("info")) {
                             //proceed to next step
                         }                        
@@ -80,24 +79,30 @@ public class FolderManager {
     
     public Folder getFolder(String name, boolean scanAll) 
     {
-        AnubisContext ctx = AnubisContext.getCurrentContext();        
         if (!folders.containsKey(name)) {
+            AnubisContext ctx = AnubisContext.getCurrentContext(); 
+            boolean allowCache = ctx.getProject().isCached(); 
+            
             String moduleName = null;
             String fileName = name;
             Module modu = ctx.getModule();
             
             if (scanAll) {
-                //scan everything 
+                modu = null; 
             }
-            else if(modu!=null) {
+            
+            if ( modu != null ) { 
                 moduleName = modu.getName(); 
-                fileName = name.substring(("/"+modu.getName()).length());
+                String str = "/"+ moduleName;
+                if ( fileName.startsWith(str)) {
+                    fileName = name.substring( str.length());
+                }
             }
             
             Set<String> urlNames = new LinkedHashSet();
             //check first if the requested file is from a module, else scan
             //through all files in folders
-            if(modu!=null && !scanAll) {
+            if ( modu != null ) {
                 for (String s : scanFileNames(fileName, modu.getUrl(), fileName )) {
                     urlNames.add( modu.getName()+":"+ s);
                 }
@@ -106,7 +111,7 @@ public class FolderManager {
                 urlNames.addAll( scanFileNames(fileName,project.getUrl(),fileName) );
                 urlNames.addAll( scanFileNames(fileName,ctx.getSystemUrl(), fileName) );
                 for( Module mod: project.getModules().values()) {
-                    for (String s : scanFileNames(fileName, mod.getUrl(), fileName )) {                        
+                    for (String s : scanFileNames(fileName, mod.getUrl(), fileName )) {    
                         urlNames.add( mod.getName()+":"+ s);
                     }
                 }
@@ -135,21 +140,23 @@ public class FolderManager {
                     e.printStackTrace();
                 }
             }
-            Collections.sort( folder.getChildren()  );
+            Collections.sort( folder.getChildren()); 
+            if ( !allowCache ) return folder; 
+
             folders.put(name, folder);
         }
         return folders.get(name);
     }
     
-    public Folder getFolder(String name, String moduleName) 
-    {
+    public Folder getFolder(String name, String moduleName) { 
         if (moduleName == null || moduleName.length() == 0)
             return getFolder(name); 
                 
-        AnubisContext ctx = AnubisContext.getCurrentContext();
         String sname = "/" + moduleName + name;        
-        if (!folders.containsKey(sname)) 
-        {
+        if (!folders.containsKey(sname)) {
+            AnubisContext ctx = AnubisContext.getCurrentContext();
+            boolean allowCache = ctx.getProject().isCached();
+            
             Set<String> urlNames = new LinkedHashSet();
             Module mod = project.getModules().get(moduleName);
             for (String s : scanFileNames(name, mod.getUrl(), name )) {
@@ -178,7 +185,9 @@ public class FolderManager {
                     e.printStackTrace();
                 }
             }
-            Collections.sort( folder.getChildren()  );
+            Collections.sort( folder.getChildren()); 
+            if (!allowCache) return folder;
+            
             folders.put(name, folder);
         }
         return folders.get(name); 
