@@ -33,7 +33,7 @@ public class FolderManager {
         this.project = project;
     }
     
-    private Set<String> scanFileNames(final String prefixName, String rootUrl, String fileName) {
+    private Set<String> scanFileNames(final String prefixName, final String rootUrl, String fileName) {
         //scan directories here
         final Set<String> items = new LinkedHashSet();
         try {
@@ -52,15 +52,22 @@ public class FolderManager {
                         
                     } else {
                         if (f.getExt()!=null && f.getExt().equals("conf")) return;
-                        if (f.getFileName().equals("info")) {
-                            //proceed to next step
-                        }                        
-                        else if (!f.getFileName().endsWith(".pg")) return;
                         
-                        fname = f.getFileName(); 
+                        if (f.getUrl().toString().endsWith("/info")) {
+                            String parentPath = f.getParentPath();
+                            fname = parentPath.substring( parentPath.lastIndexOf('/')+1);
+                        }                                            
+                        else if (!f.getFileName().endsWith(".pg")) { 
+                            // exit is file is not a pg extension
+                            return;
+                        } 
+                        else {
+                            fname = f.getFileName();                             
+                        }
+                        
                     }
                     
-                    if ( fname != null ) {
+                    if ( fname != null && fname.trim().length() > 0 ) {
                         String pName = prefixName;
                         if(!pName.equals("/")) pName = pName ;
                         if(!pName.endsWith("/")) pName = pName + "/";
@@ -74,25 +81,21 @@ public class FolderManager {
     }
     
     public Folder getFolder(String name) {
-        return getFolder(name, false);
+        return getFolder(name, null);
     }
     
-    public Folder getFolder(String name, boolean scanAll) 
-    {
+    public Folder getFolder(String name, String moduleName){
         if (!folders.containsKey(name)) {
             AnubisContext ctx = AnubisContext.getCurrentContext(); 
-            boolean allowCache = ctx.getProject().isCached(); 
-            
-            String moduleName = null;
+            boolean allowCache = ctx.getProject().isCached();             
             String fileName = name;
-            Module modu = ctx.getModule();
             
-            if (scanAll) {
-                modu = null; 
+            Module modu = null;
+            if ( moduleName != null ) {
+                modu = ctx.getProject().getModules().get( moduleName );
             }
             
             if ( modu != null ) { 
-                moduleName = modu.getName(); 
                 String str = "/"+ moduleName;
                 if ( fileName.startsWith(str)) {
                     fileName = name.substring( str.length());
@@ -121,9 +124,8 @@ public class FolderManager {
             for (String s: urlNames) {
                 try {
                     String path = s; 
-                    if ( path.endsWith("/info")) {
-                        path = path.substring( 0, path.lastIndexOf("/info"));
-                    } 
+                    if ( path.endsWith("/info")) continue; 
+                    if ( path.endsWith("/content")) continue;
                     
                     Module mod = null; 
                     String modname = null; 
@@ -136,7 +138,8 @@ public class FolderManager {
                     
                     File f = project.getFileManager().getFile( fname, path, mod );
                     if (!f.isHidden()) folder.getChildren().add( f );
-                } catch(Throwable e) {
+                } 
+                catch(Throwable e) {
                     e.printStackTrace();
                 }
             }
@@ -146,51 +149,6 @@ public class FolderManager {
             folders.put(name, folder);
         }
         return folders.get(name);
-    }
-    
-    public Folder getFolder(String name, String moduleName) { 
-        if (moduleName == null || moduleName.length() == 0)
-            return getFolder(name); 
-                
-        String sname = "/" + moduleName + name;        
-        if (!folders.containsKey(sname)) {
-            AnubisContext ctx = AnubisContext.getCurrentContext();
-            boolean allowCache = ctx.getProject().isCached();
-            
-            Set<String> urlNames = new LinkedHashSet();
-            Module mod = project.getModules().get(moduleName);
-            for (String s : scanFileNames(name, mod.getUrl(), name )) {
-                urlNames.add( mod.getName()+":"+ s);
-            }
-            
-            Folder folder = new Folder(sname, new HashMap());            
-            for (String s: urlNames) 
-            {
-                try 
-                {
-                    String path = s; 
-                    if ( path.endsWith("/info")) {
-                        path = path.substring( 0, path.lastIndexOf("/info"));
-                    } 
-                    
-                    String fname = path; 
-                    if ( path.indexOf(':') > 0) {
-                        fname = path.substring( path.indexOf(':')+1); 
-                    }
-                    
-                    File f = project.getFileManager().getFile( fname, path, mod );
-                    if (!f.isHidden()) folder.getChildren().add( f );
-                } 
-                catch(Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            Collections.sort( folder.getChildren()); 
-            if (!allowCache) return folder;
-            
-            folders.put(name, folder);
-        }
-        return folders.get(name); 
     }
 
     public File findFirstVisibleFile(String s) {

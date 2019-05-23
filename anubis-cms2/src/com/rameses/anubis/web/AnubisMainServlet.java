@@ -255,7 +255,7 @@ public class AnubisMainServlet extends AbstractAnubisServlet {
     }
     private File findFile( Project project, String filepath ) { 
         try {
-            return project.getFileManager().getFile( filepath );
+            return project.getFileManager().getFile( filepath, filepath, null );
         } catch (Exception e) {
             return null; 
         }

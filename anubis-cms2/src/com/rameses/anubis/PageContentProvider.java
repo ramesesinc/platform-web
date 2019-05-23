@@ -41,6 +41,11 @@ public class PageContentProvider extends ContentProvider {
         
         String result  = "";        
         try {
+            contentSource.findSystemResourceOnly = false; 
+            if (params != null && params.containsKey("ERROR")) {
+                contentSource.findSystemResourceOnly = true; 
+            }
+            
             ContentTemplate ct = project.getTemplateCache().getTemplate( file.getFilePath(), contentSource );
             result = ct.render( pmap  );
             pmap.put("content", result );
@@ -53,12 +58,19 @@ public class PageContentProvider extends ContentProvider {
     
     //SOURCE OF THE CONTENT
     private class PageContentCacheSource extends ContentTemplateSource {
+        
+        boolean findSystemResourceOnly; 
+        
         public String getType() {
             return "content";
         }
         public InputStream getResource(String name) throws ResourceNotFoundException{
             AnubisContext ctx = AnubisContext.getCurrentContext();
             Module mod = ctx.getModule();
+            if ( findSystemResourceOnly ) {
+                mod = null; 
+            }
+            
             String fname = name; 
             
             ArrayList<String> basePaths = new ArrayList(); 

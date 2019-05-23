@@ -11,9 +11,12 @@ package com.rameses.anubis;
 
 import com.rameses.util.ConfigProperties;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -22,34 +25,88 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class TemplateManager {
     
-    private List<MappingEntry> mappings = new ArrayList();
-    private List<MappingEntry> fragmentMappings = new ArrayList();
+    private ArrayList<MappingEntry> mappings = new ArrayList();
+    private ArrayList<MappingEntry> fragmentMappings = new ArrayList();
     
     private ThemeTemplateCacheSource templateSource = new ThemeTemplateCacheSource();
 
+    private Project project;
+    
+    public TemplateManager(Project project) {
+        this.project = project;
+    }
+    
     public void clear() {
         mappings.clear();
         fragmentMappings.clear();
     }
     
     public void init(ConfigProperties conf) {
-        Map masters = conf.getProperties( "template-mapping" );
-        if(masters!=null) {
-            //load master template mapping
-            for(Object o: masters.entrySet()) {
-                Map.Entry me = (Map.Entry)o;
-                mappings.add( new MappingEntry(me.getKey()+"", me.getValue()+"" ));
-            }
+        ArrayList<String> urls = new ArrayList();
+        urls.add( project.getUrl() + "template-mapping.conf" ); 
+        for (Module mod : project.getModules().values()) {
+            urls.add( mod.getUrl() + "template-mapping.conf" ); 
         }
         
-        masters = conf.getProperties( "fragment-template-mapping" );
-        if(masters!=null) {
-            //load master template mapping
-            for(Object o: masters.entrySet()) {
-                Map.Entry me = (Map.Entry)o;
-                fragmentMappings.add( new MappingEntry(me.getKey()+"", me.getValue()+"" ));
+        List allList = new ArrayList(); 
+        URL url = null;
+        for ( String path : urls ) {
+            Properties props = new Properties(); 
+            try {
+                url = new URL( path );
+                props.load( url.openStream()); 
+            } catch(Throwable t) { 
+                continue; 
             }
+            
+            List list = new ArrayList(); 
+            for(Map.Entry me : props.entrySet()) { 
+                String key = (me.getKey() == null ? "" : me.getKey().toString().trim()); 
+                if ( key.trim().length() == 0 ) continue; 
+                
+                String val = (me.getValue() == null ? "" : me.getValue().toString().trim());
+                if ( val.trim().length() == 0 ) continue; 
+                
+                list.add( new MappingEntry( key, val ));
+            }
+            
+            list.addAll( allList );  
+            allList = list; 
         }
+        mappings.addAll( allList ); 
+        
+        urls.clear(); 
+        urls.add( project.getUrl() + "fragment-template-mapping.conf" ); 
+        for (Module mod : project.getModules().values()) {
+            urls.add( mod.getUrl() + "fragment-template-mapping.conf" ); 
+        }    
+        
+        allList.clear();
+        url = null;
+        for ( String path : urls ) {
+            Properties props = new Properties(); 
+            try {
+                url = new URL( path );
+                props.load( url.openStream()); 
+            } catch(Throwable t) {  
+                continue; 
+            }
+            
+            List list = new ArrayList(); 
+            for(Map.Entry me : props.entrySet()) { 
+                String key = (me.getKey() == null ? "" : me.getKey().toString().trim()); 
+                if ( key.trim().length() == 0 ) continue; 
+                
+                String val = (me.getValue() == null ? "" : me.getValue().toString().trim());
+                if ( val.trim().length() == 0 ) continue; 
+                
+                list.add( new MappingEntry( key, val ));
+            }
+            list.addAll( allList ); 
+            allList = list;
+        }
+        fragmentMappings.addAll( allList ); 
+        allList.clear(); 
     }
         
     private void renderTemplate(String[] masters, Map pmap, Project project) {

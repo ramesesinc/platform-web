@@ -70,40 +70,9 @@ public class Project extends HashMap  {
         init();
     }
     
-//    public void reload() {
-//        ConfigProperties newconf = ContentUtil.getConf( _url + "/project.conf" );
-//        super.clear();
-//        conf.clear(); 
-//        conf = newconf; 
-//        super.putAll( newconf.getProperties()); 
-//        super.put("name", _id); 
-//        super.put("url", _url);
-//
-//        templateCache.clear();
-//        serviceManager.clear();
-//        fileManager.clear();
-//        folderManager.clear(); 
-//        
-//        templateManager.clear();
-//        templateManager = new TemplateManager();
-//        templateManager.init( conf ); 
-//        
-//        blockManager.clear();
-//        blockManager = new BlockManager();
-//        blockManager.init( conf ); 
-//        
-//        actionManager.clear();
-//        actionManager = new ActionManager();
-//        actionManager.init( conf );
-//        
-//        permalinkManager.clear(); 
-//        permalinkManager = new PermalinkManager( this );
-//        permalinkManager.init( conf );
-//    }
-    
     public void init() {
         this.templateCache = new ContentTemplateCache();
-        this.templateManager = new TemplateManager();
+        this.templateManager = new TemplateManager( this );
         this.contentManager = new ContentManager();
         this.blockManager = new BlockManager();
         this.widgetManager = new WidgetManager();
@@ -118,13 +87,13 @@ public class Project extends HashMap  {
         this.modules = new LinkedHashMap();        
         
         mimetypeManager.init( conf ); 
-        templateManager.init( conf ); 
         blockManager.init( conf ); 
         actionManager.init( conf ); 
         
         loadThemes();
         loadModules();
 
+        templateManager.init( conf ); 
         permalinkManager.init( conf ); 
         
         String themeName = (String)super.get("theme");
