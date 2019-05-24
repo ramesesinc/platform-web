@@ -46,10 +46,14 @@ public class PageContentProvider extends ContentProvider {
                 contentSource.findSystemResourceOnly = true; 
             }
             
+            String mtemplate = project.getTemplateManager().applyTemplates( file, pmap );
             ContentTemplate ct = project.getTemplateCache().getTemplate( file.getFilePath(), contentSource );
             result = ct.render( pmap  );
-            pmap.put("content", result );
-            result = project.getTemplateManager().applyTemplates( file, pmap );
+            
+            if( mtemplate !=null ) {
+                result = mtemplate.replace(ContentMap.CONTENT_REPLACE_KEYWORD, result);
+            }
+            
             return new ByteArrayInputStream(result.getBytes());
         } catch(ResourceNotFoundException rnfe) {
             throw rnfe;

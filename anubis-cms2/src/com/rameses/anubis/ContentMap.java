@@ -21,6 +21,8 @@ import java.util.Map;
 
 public class ContentMap extends HashMap {
     
+    public final static String CONTENT_REPLACE_KEYWORD = "<<<__content__>>>";
+    
     private boolean editable;
     private ContextAttrs attrs; 
     
@@ -31,7 +33,7 @@ public class ContentMap extends HashMap {
     public Object get(Object key) {
         String skey = key.toString();
         if( skey.equals("_content")) {
-            return super.get("content");
+            return CONTENT_REPLACE_KEYWORD;
         } 
         else if(skey.startsWith("_")) {
             skey = skey.substring(1);

@@ -26,9 +26,8 @@ public class MappingEntry {
         this.templates = new String[strlen];
         
         for (int i = 0; i<str.length; i++) {
-            this.templates[i] = str[strlen-i-1].trim();
+            this.templates[i] = str[i].trim();
         }
-        
         this.moduleName = moduleName; 
     }
     

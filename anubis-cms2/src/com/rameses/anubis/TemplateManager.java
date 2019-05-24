@@ -13,7 +13,7 @@ import com.rameses.util.ConfigProperties;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -120,21 +120,26 @@ public class TemplateManager {
         allList.clear(); 
     }
         
-    private void renderTemplate(String[] masters, Map pmap, Project project, String moduleName) {
+    private String renderTemplate(String[] masters, Map pmap, Project project, String moduleName) {
+        List<String> list = new ArrayList<String>();
         for(String _master: masters) {
             try {
                 if(!_master.startsWith("/")) _master = "/" + _master;
-                
                 templateSource.moduleName = moduleName;
                 ContentTemplate ct = project.getTemplateCache().getTemplate( _master, templateSource );
-                String tresult  = ct.render( pmap );
-                if(tresult!=null && tresult.trim().length()>0) {
-                     pmap.put("content", tresult);
-                }
+                list.add( ct.render( pmap ) );
             } catch(Exception e) {
                 System.out.println("template ->"+_master + " error loading. "+e.getMessage());
             }
         }
+        String s = null;
+        for(String s1: list) {
+            if(s == null ) 
+                s = s1;
+            else 
+                s = s.replace(ContentMap.CONTENT_REPLACE_KEYWORD, s1 );
+        }
+        return s;
     }
     
     public String applyTemplates( File file, Map pmap ) {
@@ -142,13 +147,11 @@ public class TemplateManager {
         Project project = ctx.getProject();
         String[] masters = null;
         String path = file.getPath();
-        
+        String tresult = null;
         // the path that needs to be match with template mapping is Request.PathInfo
         if ( ctx.getRequest() instanceof HttpServletRequest ) {
             path = ((HttpServletRequest) ctx.getRequest()).getPathInfo(); 
         }
-
-        String result = (String) pmap.get("content");
         
         //if fragment, find the templates for fragments and apply it first
         if(file.isFragment() ) {
@@ -161,7 +164,7 @@ public class TemplateManager {
                 }
             }    
             if(masters==null) masters=new String[]{"fragment"};
-            renderTemplate( masters, pmap, project, moduleName );
+            tresult = renderTemplate( masters, pmap, project, moduleName );
         }
         
         boolean ajaxRequest = false;
@@ -180,9 +183,9 @@ public class TemplateManager {
                 }
             }
             if(masters==null) masters = new String[]{"default"};
-            renderTemplate( masters, pmap, project, moduleName );
+            tresult = renderTemplate( masters, pmap, project, moduleName );
         }
-        return (String)pmap.get("content");
+        return tresult;
     }
     
     private class ThemeTemplateCacheSource extends ContentTemplateSource {
