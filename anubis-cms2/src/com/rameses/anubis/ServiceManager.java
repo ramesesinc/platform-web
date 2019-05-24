@@ -11,6 +11,7 @@ package com.rameses.anubis;
 
 import com.rameses.anubis.service.JsonServiceHandler;
 import com.rameses.anubis.service.ScriptServiceHandler;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -138,27 +139,19 @@ public class ServiceManager {
         
         //if module is not null, then get the connection from module only
         //wlse get if from the project!
-        try {
-            if(module!=null) {
-                return ContentUtil.findJsonResource( new String[]{
-                    module.getUrl() +  SERVICE_DIR + "/" + name,
-                    module.getProvider() +  SERVICE_DIR + "/" + name
-                }, name );
-            } 
-        } catch(Throwable t) {
-            //do nothing 
+        ArrayList<String> paths = new ArrayList(); 
+        if ( module != null ) {
+            paths.add( module.getUrl() +  SERVICE_DIR + "/" + name);
+            paths.add( module.getProvider() +  SERVICE_DIR + "/" + name);
         }
-        
+        paths.add( ctx.getProject().getUrl() +"/"+ SERVICE_DIR +"/"+ name);
         try {
-            Project project = ctx.getProject();
-            return ContentUtil.findJsonResource( new String[]{
-                project.getUrl() + "/" + SERVICE_DIR +  "/" + name
-            }, name ); 
+            return ContentUtil.findJsonResource( paths.toArray(new String[]{}), name );
         } 
         catch(RuntimeException re) { 
             throw re; 
         } 
-        catch(Exception e) { 
+        catch(Throwable e) { 
             throw new RuntimeException(e); 
         } 
     }

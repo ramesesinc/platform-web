@@ -22,7 +22,7 @@ public class PageMapperResult {
         this.params = (params == null ? new HashMap() : params);
         this.filePath = filePath;
         
-        String[] arr = this.filePath.split(":"); 
+        String[] arr = this.filePath.split(":/"); 
         if ( arr.length > 1 ) {
             module = (arr[0].startsWith("/") ? arr[0].substring(1) : arr[0]); 
             this.filePath = "/"+ module + arr[1]; 
