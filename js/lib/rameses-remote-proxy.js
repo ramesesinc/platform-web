@@ -9,9 +9,10 @@ function RemoteProxy(name, connection, module, is_remote) {
 
         var datatype = (typeof result); 
         if ( datatype == 'string') { 
+        	result = unescape( result ); 
         	try {
         		if ( result.indexOf('[') == 0 && result.lastIndexOf(']') > 1 ) {
-        			return $.parseJSON(result); 
+        			return JSON.parse(result); 
         		} 
 
         		var idx0 = result.indexOf('{'); 
@@ -20,8 +21,9 @@ function RemoteProxy(name, connection, module, is_remote) {
 					result = result.substring(idx0, idx1+1); 
 				} 
         		//return JSON.parse( result ); 
-        		return $.parseJSON(result); 
-        	} catch(e) { 
+        		return JSON.parse(result); 
+        	} 
+        	catch(e) { 
         		console.log( e ); 
         	} 
 		} 
@@ -74,6 +76,7 @@ function RemoteProxy(name, connection, module, is_remote) {
 
 			var has_received_result = false; 
 			var ws = new WebSocket('ws://'+ wshost +'/gdx-notifier/subscribe/'+ tokenid);
+			console.log(wshost);
 			ws.onopen = function() {} 
 			ws.onclose = function() {} 
 			ws.onerror = function ( evt ) { 
@@ -111,7 +114,7 @@ function RemoteProxy(name, connection, module, is_remote) {
 				}
 				else if ((typeof data) == 'object') { 
 					var svc = Service.lookup('CacheService');  
-					data.result = svc.get({ key: data.tokenid, autoremove: true }); 
+					data.result = svc.get({ key: data.tokenid, autoremove: true, charset:'UTF8' }); 
 				} 
 
 				if ( handler ) {
@@ -120,7 +123,7 @@ function RemoteProxy(name, connection, module, is_remote) {
 			} 
 
 			$.ajax({ 
-				type    : "POST",				
+				type    : "POST", 		
 				url     : urlaction,
 				data    : data, 
 				async   : true,	
@@ -155,11 +158,11 @@ function RemoteProxy(name, connection, module, is_remote) {
 			}
 			else {
 				$.ajax({ 
-					type    : "POST",				
-					url     : urlaction,
-					data    : data,
-					async   : true,				
-					success : function( data) { 
+					type    : "POST", 	
+					url     : urlaction, 
+					data    : data, 
+					async   : true,	
+					success : function( data ) { 
 						var r = convertResult(data);
 						handler(r); 
 					},

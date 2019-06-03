@@ -370,7 +370,7 @@ var BindingUtils = new function() {
 
 		var fragment = $e.closest('.rui-fragment');
 		if (!fragment[0]) fragment = $e.closest('.rui-controller');
-		if (!fragment[0]) fragment = $e;
+		if (!fragment[0]) fragment = $e.closest('body'); 
 
 		var idx=0;
 		fragment.find('.depends').each(function(i, o) {
@@ -378,7 +378,9 @@ var BindingUtils = new function() {
 			var context = R.attr($o,'context')+'';
 			var depends = R.attr($o,'depends')+'';
 			var matchContext = (context==contextName);
-			var matchDepends = (depends.match('.*'+dependName+'.*')); 
+			if ( !matchContext ) return;
+
+			var matchDepends = (dependName.match(depends+'.*')); 
 			if (matchContext && matchDepends && matchDepends[0]) {
 				controlLoader(idx++, this); 
 			}
@@ -778,7 +780,7 @@ function Controller( code, pages ) {
 				/*added support for parameters that are set when firing a button or action.*/
 				if( R.attr($(control), "params") ) { 
 					try {
-						var _parms  = $.parseJSON(R.attr($(control), 'params'));
+						var _parms  = JSON.parse(R.attr($(control), 'params'));
 						BeanUtils.setProperties( codebean, _parms );
 					} catch(e) { 
 						if(window.console && R.DEBUG) console.log("error in control params " + e.message );
@@ -967,6 +969,7 @@ var ContextManager = new function() {
 					c.currentPage = result;
 			});
         }
+
 		codesource._controller = c;
 		codesource.close = function() { codesource._controller.navigate("_close"); }
 		codesource.exit = function() { codesource._controller.navigate("_exit"); }
@@ -1065,7 +1068,8 @@ BindingUtils.handlers.input_text = function(elem, controller, idx ) {
 				value = ui.item.value;
 			}
 			else {
-				value = $.toJSON( ui.item );
+				//value = JSON.stringify( ui.item );
+				value = JSON.stringify( ui.item );
 			}
 			
 			input.val( value );
@@ -1347,25 +1351,63 @@ BindingUtils.handlers.button = function( elem, controller, idx ) {
 	}
 };
 
-BindingUtils.handlers.input_image = function( elem, controller, idx ) {
+BindingUtils.handlers.input_file = function( elem, controller, idx ) {
 	var $e = (elem['selector']? elem: $(elem));
-    var action = R.attr($e, "name");
+    var name = R.attr($e, "name");
+    var ctxname = controller.name;
+	var ctl = controller;    
+	elem.onchange = function() {
+		var file = elem.files[0];
+		var fileReader = new FileReader();
+		fileReader.onload = function (event) {
+			ctl.set(name, event.target.result);
+		}
+		fileReader.readAsDataURL(file);
+	}
+};
+
+BindingUtils.handlers.img = function( elem, controller, idx ) {
+	var $e = (elem['selector']? elem: $(elem));
+    var name = R.attr($e, "name");
     
     $e.removeClass('depends'); 
     var depends = R.attr($e, 'depends'); 
     if (depends) $e.addClass('depends'); 
 
-    elem.onclick = function() { 
-		if( action ) {
-			try {
-				$get(controller.name).invoke( this, action ); 
-			}
-			catch(e) {
-				if( window.console && R.DEBUG ) console.log( e.message );	
-			}
-		}
-		return false; 
-	}
+    /*
+    var width = elem.width;
+    var height = elem.height;
+
+    //adjust the image based on width and height
+    console.log("image width is " + width + " height is "+height);
+    if( width !=null || height != null ) {
+    	elem.onload=function(){
+	        var canvas=document.createElement("canvas");
+	        var context=canvas.getContext("2d");
+	        canvas.width=image.width/9;
+	        canvas.height=image.height/9;
+	        context.drawImage(image,
+	            0,
+	            0,
+	            image.width,
+	            image.height,
+	            0,
+	            0,
+	            canvas.width,
+	            canvas.height
+	        );
+	        document.getElementById("idphoto").src = canvas.toDataURL();
+	    }
+    }
+	*/
+	
+    var d = controller.get( name );
+    if( d !=null ) {
+    	elem.src = d;
+    }
+    else {
+    	elem.src = null;
+    }
 };
 
 BindingUtils.handlers.input_submit = function( elem, controller, idx ) {
@@ -1474,254 +1516,6 @@ BindingUtils.handlers.div = function( elem, controller, idx ){
 }; 
 
 
-/**----------------------------------*
- * file upload plugin
- *
- * @author jaycverg
- *-----------------------------------*/
-BindingUtils.handlers.input_file = function( elem, controller, idx ) {
-	
-	var infile = $(elem);
-	var div = infile.data('_binded');
-	
-	if( !div ) {
-		div = $('<div></div>').insertBefore(elem)
-		 .css('display', 'block').addClass('file-uploader');
-		infile.data('_binded', div);
-	};
-
-	div.empty();
-
-	//hide the original input file
-	infile.hide().css('opacity', 0);
-
-	//-- properties/callbacks
-	var oncomplete = R.attr(infile, 'oncomplete');
-	var onremove =   R.attr(infile, 'onremove');
-	var labelExpr =  R.attr(infile, 'expression');
-	var name =       R.attr(infile, 'name');
-	var fieldValue = controller.get(name);
-	var params =     R.attr(infile, 'params');
-	
-	var multiFile =  fieldValue instanceof Array;
-
-	//upload box design
-	var listBox =       $('<div class="files"></div>').appendTo(div);
-	var inputWrapper =  $('<div style="overflow: hidden; position: absolute;"></div>');
-	var anchorLbl =     $('<a href="#">' + R.attr(infile, 'caption') + '</a>');
-	var anchorBox =     $('<div class="selector" style="position: relative"></div>');
-	var lblWidth =  0;
-
-	if( fieldValue ) {
-		var items = multiFile? fieldValue : [fieldValue];
-		for(var i=0; i<items.length; ++i) addToFileList(null,null,null,null,items[i]);
-	}
-	
-	if( multiFile || !fieldValue ) {
-		anchorBox.appendTo( div )
-		.append( anchorLbl )
-		.append( inputWrapper );
-		
-		lblWidth = anchorLbl[0].offsetWidth;
-		inputWrapper.css({left: 0, top: 0, width: lblWidth});
-		
-		attachInput();
-	}
-	
-	
-	function attachInput() {
-		var input = $('<input type="file" name="file"/>');
-		input.appendTo( inputWrapper )
-		 .change(file_change)
-		 .css({
-			position:'relative', opacity: 0, cursor: 'pointer', 
-			left: -(input[0].offsetWidth - lblWidth)
-		 });
-	}
-
-	function file_change(e) {
-		var frameid = '__frame' + Math.floor( Math.random() * 200000 );
-		var input =   $(this).remove().attr('name', frameid);
-		var frame =   createFrame(frameid);
-		var form =    createForm(frameid, input);
-		var pBar =    $('<div class="bar"><div class="progress"></div></div>');
-
-		addToFileList(frame, form, pBar, input);
-
-		var req = new ProgressRequest( pBar, frameid );
-		frame.load(function(){
-			req.completed();
-			frame_loaded(frame);
-		});
-
-		form.submit(function(){
-			req.start();
-		});
-
-		if( multiFile ) 
-			attachInput();
-		else
-			anchorBox.hide();
-		
-		form.submit();
-	}
-	
-	function getCaption( value ) {
-		return value? 
-		        (cap = labelExpr? labelExpr.evaluate(value) : $.toJSON(value)) : 
-		        'No Caption';
-	}
-
-	function frame_loaded(frame) {
-		var value = null;
-		var lbl = frame.parent().find('div.label')
-
-		var resptext = frame.contents().text().trim();
-		try {
-			value = $.parseJSON(resptext);
-		}catch(e){
-			alert( resptext, "Upload Error" );
-			controller.refresh();
-			return;
-		}
-
-		if( name ) {
-			if( multiFile )
-				controller.get(name).push(value);
-			else
-				controller.set(name, value);
-		}
-		lbl.html( getCaption(value) );
-		
-		if( oncomplete ) 
-			BeanUtils.invokeMethod( controller.code, oncomplete, value, true );
-
-		if( onremove ) {
-			$('<a href="#" class="remove">Remove</a>')
-			 .appendTo( lbl )
-			 .click(function(){
-				var res = BeanUtils.invokeMethod( controller.code, onremove, {index: frame.parent().index(), value: value}, true );
-				if( res == false || res == 'false' ) return;
-				frame.parent().animate({opacity: 0}, {duration:400, complete:function(){ $(this).remove(); }});
-			 });
-		}
-	}
-
-	function addToFileList(frame, form, pBar, input, value) {
-		var b = $.browser;
-
-		//decorate progress bar
-		if( pBar && frame ) {
-			pBar.find('div.progress')
-			.addClass( b.msie? '' : b.webkit? 'webk' : 'moz' )
-			.attr('id', frame.attr('id') + '_progress');
-		}
-
-		//create the file item box
-		var fibox = $('<div class="file"></div>').appendTo( listBox );
-		if( frame ) fibox.append( frame );
-		if( form )  fibox.append( form );
-		fibox.append('<div class="label">' + (pBar && input? extractFilename(input.val()) : getCaption( value )) + '</div>')
-		if( pBar )  fibox.append( pBar );
-	}
-	
-	function extractFilename( filename ) {
-		//*nix filename
-		var idx = filename.lastIndexOf('/');
-		if( idx >= 0 ) 
-			return filename.substr(idx+1);
-
-		//windows filename
-		idx = filename.lastIndexOf('\\');
-		if( idx >= 0 ) 
-			return filename.substr(idx+1);
-		
-		return filename;
-	}
-
-	function createFrame( id ) {
-		return $('<iframe src="" id="'+id+'" name="'+id+'"></iframe>').hide();
-	}
-
-	function createForm( target, input ) {
-		var form = $('<form method="post" enctype="multipart/form-data"></form>')
-			       .attr({ 'target': target, 'action': R.attr(infile, 'url') })
-			       .append( input )
-			       .append( '<input type="hidden" name="file_id" value="' +target+ '"/>' )
-			       .hide();
-		if( params ) {
-			var txt = params.evaluate( controller.code );
-			var p = eval('('+txt+')');
-			if( p ) {
-				for(var i in p) {
-					$('<input type="hidden"/>')
-					 .attr('name', i).val(p[i])
-					 .appendTo(form);
-				}
-			}
-		}
-				   
-		return form;
-	}
-
-	//-- utility inner class for file status pulling --
-	function ProgressRequest( bar, reqId ) {
-
-		var progress = bar.find('div.progress');
-		var completed = false;
-
-
-		this.start = function() {
-			pullUpdates();
-		};
-
-		this.completed = function() {
-			updateProgress( 100 );
-			completed = true;
-		};
-
-		function pullUpdates() {
-			if( completed ) return;
-
-			$.ajax({
-				url: R.attr(infile, 'url'),
-				cache: false,
-				data: 'fileupload.status=' + reqId,
-				success: onPullResponse
-			});
-		}
-
-		function onPullResponse(data) {
-			try {
-				var resp = $.parseJSON(data);
-				//alert( data );
-				updateProgress( resp.percentCompleted );
-			}
-			catch(e) {;}
-
-			if( !completed ) {
-				//throws error in IE if no deplay specified
-				setTimeout( pullUpdates, 5 );
-			}
-		}
-
-		var prevValue = 0;
-
-		function updateProgress( value ) {
-			value = (typeof value == 'number')? value : 0;
-			prevValue = (value > prevValue)? value : prevValue;
-			progress.stop().animate({width: prevValue+'%'}, {duration: 100, complete: function() {
-				if( completed ) {
-					bar.animate({opacity: 0}, {duration: 600, complete: function() {
-						$(this).hide('fast');
-					}});
-				}
-			}});
-		}
-
-	}
-
-};// --- end of file upload plugin ---
 
 
 /**----------------------------------*
@@ -2021,8 +1815,6 @@ function DataTable( table, bean, controller ) {
 		var className = (i%2==0)? 'even': 'odd'; 
 	
 		return tpl.clone()
-		 .addClass('row')
-		 .addClass(className)		 
 		 .data('index', i)
 		 .each(function(i,e) 
 		 {
