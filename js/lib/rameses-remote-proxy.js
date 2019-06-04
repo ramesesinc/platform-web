@@ -35,16 +35,11 @@ function RemoteProxy(name, connection, module, is_remote) {
 		return s4() +'-'+ s4() +'-'+ s4(); 
 	} 
 
-	var getConnInfo = function( sname ) { 
-		var err = null; 
-		var params = { 
-			type: "GET", async: false, url: '/connections/'+ sname, 
-	        error: function( xhr ) { err = xhr.responseText } 
-		} 
-		var result = $.ajax( params ).responseText; 
-		if ( err != null ) window.console.log( err ); 
-		if ( result ) return JSON.parse( result ); 
-		return {}; 
+	var getDomain = function() { 
+		var href = window.location.href;
+		href = href.substring( href.indexOf('://') + 3);
+		href = href.split('/')[0];
+		return href.split(':')[0];
 	} 
 
 	this.invoke = function( action, args, handler ) {
@@ -70,12 +65,8 @@ function RemoteProxy(name, connection, module, is_remote) {
 
 			data = 'args=' + encodeURIComponent(JSON.stringify([ _args ])); 
 
-			var connInfo = getConnInfo( this.connection ); 
-			var wshost = connInfo['ws.host']; 
-			if ( !wshost ) throw new Error(""+ this.connection +" connection requires ws.host setting");  
-
 			var has_received_result = false; 
-			var ws = new WebSocket('ws://'+ wshost +'/gdx-notifier/subscribe/'+ tokenid);
+			var ws = new WebSocket('ws://'+ getDomain() +':9001/gdx-notifier/subscribe/'+ tokenid);
 			console.log(wshost);
 			ws.onopen = function() {} 
 			ws.onclose = function() {} 
@@ -180,6 +171,11 @@ var Service = new function() {
 	this.services = {}
 	this.module = null;
 
+	var guid = function() { 
+		function s4() { return ''+ Math.floor(Math.random()*1000000001); } 
+		return s4() +'-'+ s4() +'-'+ s4(); 
+	} 
+
 	this.lookup = function(name, connection, mod) { 
 		var is_remote = (name.indexOf(':') > 0); 
 
@@ -196,6 +192,7 @@ var Service = new function() {
 			
 			var urlaction =  '/js-proxy' + (module? '/'+module: '');
 			urlaction += '/' + connection + '/' + name + ".js";
+			urlaction += '?' + guid();
 			
             if (this.debug == true && window.console) 
 				window.console.log('Service_lookup: urlaction='+urlaction); 

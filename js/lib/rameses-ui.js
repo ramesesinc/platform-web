@@ -1116,25 +1116,29 @@ BindingUtils.handlers.select = function(elem, controller, idx ) {
 	}
 	
 	if( items!=null && items!='') {
+		var beanValue = selected;
 		var itemKey = R.attr($e, "itemKey");
 		var itemLabel = R.attr($e, "itemLabel");
+		var compareKey = R.attr($e, 'compareKey');
 		var arr = controller.get(items);
 		$(arr).each( function(idx,value) {
-			var _key = value;
-			if( itemKey != null ) _key = value[itemKey];
-			var _label = value+'';
-			if( itemLabel != null ) _label = value[itemLabel];
+			var _key = (itemKey != null ? value[itemKey] : value);
+			var _label = (itemLabel != null ? value[itemLabel] : value+'');
 
-			var op = new Option(_label,_key+'');
-			
+			var op = new Option(_label, _key+'');			
 			$(op).data('value', _key);
 			$(op).data('object_value', value);
 			elem.options[idx+i] = op;
-			op.selected = (_key == selected);
+
+			if ( compareKey && beanValue ) {
+				op.selected = (_key[compareKey] == beanValue[compareKey]);
+			} else {
+				op.selected = (_key == beanValue);	
+			} 			
 		});
 	}
 	else if( elem.options.length > 0 ) {
-		$(elem.options).each(function(i,option){
+		$(elem.options).each(function(i,option) {
 			option.selected = (option.value == selected);
 		});
 	}
