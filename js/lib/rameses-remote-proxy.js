@@ -67,7 +67,6 @@ function RemoteProxy(name, connection, module, is_remote) {
 
 			var has_received_result = false; 
 			var ws = new WebSocket('ws://'+ getDomain() +':9001/gdx-notifier/subscribe/'+ tokenid);
-			console.log(wshost);
 			ws.onopen = function() {} 
 			ws.onclose = function() {} 
 			ws.onerror = function ( evt ) { 

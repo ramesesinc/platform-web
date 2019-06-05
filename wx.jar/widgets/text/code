@@ -1,0 +1,38 @@
+<%   
+	def blockClass = '';
+	if( OPTIONS.blockClass ) blockClass = " class=\""+OPTIONS.blockClass+ "\"";
+
+	def captionClass = '';
+	if( OPTIONS.captionClass ) captionClass = " class=\""+OPTIONS.captionClass+ "\"";
+
+	def valueClass = '';
+	if( OPTIONS.valueClass ) valueClass = " class=\""+OPTIONS.valueClass+ "\"";
+
+	def placeHolder = '';
+	if( OPTIONS.hint ) placeHolder = " placeHolder=\""+OPTIONS.hint+ "\"";
+
+	def props = [:];
+	if( OPTIONS.attrs !=null ) props.putAll( OPTIONS.attrs );
+
+	props.context = OPTIONS.context;
+	props.name = OPTIONS.name;
+	props.caption = OPTIONS.caption;
+
+	boolean required = false;
+	if( OPTIONS.required !=null ) {
+		required = OPTIONS.required;
+		props.required = required;
+	}
+
+	def attrs = "";
+	def list = [];
+	props.each { k,v->
+		list << ' r:'+k+'="'+v+ '"' ;		
+	}
+	attrs = list.join(" ");
+
+%>
+<div${blockClass}>
+	<label${captionClass}>${OPTIONS.caption} <%if(required==true){%><b style="color:red"> * </b><%}%></label>
+	<input type="text" ${valueClass} ${attrs} ${placeHolder}/> 
+</div>

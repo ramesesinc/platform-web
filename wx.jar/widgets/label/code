@@ -1,0 +1,25 @@
+<%   
+	def blockClass = '';
+	if( OPTIONS.blockClass ) blockClass = " class=\""+OPTIONS.blockClass+ "\"";
+
+	def captionClass = '';
+	if( OPTIONS.captionClass ) captionClass = " class=\""+OPTIONS.captionClass+ "\"";
+
+	def valueClass = '';
+	if( OPTIONS.valueClass ) valueClass = " class=\""+OPTIONS.valueClass+ "\"";
+
+	def props = OPTIONS.attrs;
+	if(props == null ) props = [:];
+	props.context = OPTIONS.context;
+
+	def attrs = "";
+	def list = [];
+	props.each { k,v->
+		list << ' r:'+k+'="'+v+ '"';		
+	}
+	attrs = list.join(" ");
+%>
+<div${blockClass}>
+	<label${captionClass}>${OPTIONS.caption}</label>
+	<label${valueClass} ${attrs}>${OPTIONS.expr}</label> 
+</div>
