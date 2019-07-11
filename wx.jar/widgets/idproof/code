@@ -1,0 +1,68 @@
+<%   
+  def blockClass = '';
+  if( OPTIONS.blockClass ) blockClass = " class=\""+OPTIONS.blockClass+ "\"";
+
+  def visibleWhen = '';
+  if( OPTIONS.visibleWhen ) visibleWhen = " r:visibleWhen=\""+OPTIONS.visibleWhen+ "\"";
+  def depends = '';
+  if( OPTIONS.depends ) depends = " r:depends=\""+OPTIONS.depends+ "\"";
+
+  def captionClass = 'caption-class';
+  if( OPTIONS.captionClass ) {
+    def cc = OPTIONS.captionClass;
+    if( cc.trim().startsWith("+") ) {
+      captionClass += ' ' + cc.substring(1);
+    }   
+    else {
+      captionClass = cc;    
+    }
+  } 
+
+  def action = OPTIONS.action;
+
+  def outputClass = 'output-class';
+  if( OPTIONS.outputClass ) {
+    def cc = OPTIONS.outputClass;
+    if( cc.trim().startsWith("+") ) {
+      outputClass += ' ' + cc.substring(1);
+    }   
+    else {
+      outputClass = cc;   
+    }
+  } 
+
+  boolean readonly = false;
+  if( OPTIONS.readonly ) readonly = OPTIONS.readonly;
+
+  if( !OPTIONS.caption ) OPTIONS.caption = "Proof of Identity";
+
+  def props = OPTIONS.attrs;
+  if(props == null ) props = [:];
+  props.context = OPTIONS.context;
+
+  def attrs = "";
+  def list = [];
+  props.each { k,v->
+    list << ' r:'+k+'="'+v+ '"';    
+  }
+  attrs = list.join(" ");
+%>
+
+<div${blockClass}${visibleWhen}${depends} r:context="${OPTIONS.context}">
+  <label class="${captionClass}">${OPTIONS.caption}</label>
+  <div style="display:inline-block;">
+    <label r:context="${OPTIONS.context}" r:visibleWhen="#{${OPTIONS.name}}" class="${outputClass}">
+      Type: #{${OPTIONS.name}.type.title}<br>
+      #{${OPTIONS.name}.type.caption}:#{${OPTIONS.name}.idno}<br>
+      Date Issued: #{${OPTIONS.name}.dtissued}<br>
+      Place Issued: #{${OPTIONS.name}.placeissued}<br>
+      #{ (!${OPTIONS.name}.dtvalid) ? '' : 'Validity Date: ' +  ${OPTIONS.name}.dtvalid + '<br>'}
+      <%if( !readonly) {%>       
+        <a class="attachId" href="#" r:context="${OPTIONS.context}" r:name="${OPTIONS.action}" r:immediate="true">[Change]</a>
+      <%}%>
+    </label>
+    <%if( !readonly) {%> 
+      <a class="attachId" href="#" r:context="${OPTIONS.context}" r:name="${OPTIONS.action}" r:visibleWhen="#{!${OPTIONS.name}}" r:immediate="true">[Change]</a>
+    <%}%>
+  </div>  
+</div>

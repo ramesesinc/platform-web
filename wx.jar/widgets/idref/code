@@ -1,0 +1,93 @@
+<%   
+	def blockClass = '';
+	if( OPTIONS.blockClass ) blockClass = " class=\""+OPTIONS.blockClass+ "\"";
+
+	
+	def visibleWhen = '';
+	if( OPTIONS.visibleWhen ) visibleWhen = " r:visibleWhen=\""+OPTIONS.visibleWhen+ "\"";
+	def depends = '';
+	if( OPTIONS.depends ) depends = " r:depends=\""+OPTIONS.depends+ "\"";
+
+	
+
+	def captionClass = 'caption-class';
+	if( OPTIONS.captionClass ) {
+		def cc = OPTIONS.captionClass;
+		if( cc.trim().startsWith("+") ) {
+			captionClass += ' ' + cc.substring(1);
+		}		
+		else {
+			captionClass = cc;		
+		}
+	}	
+
+	def subCaptionClass = 'subcaption-class';
+	if( OPTIONS.subCaptionClass ) {
+		def cc = OPTIONS.subCaptionClass;
+		if( cc.trim().startsWith("+") ) {
+			subCaptionClass += ' ' + cc.substring(1);
+		}		
+		else {
+			subCaptionClass = cc;		
+		}
+	}	
+
+	def inputClass = 'input-class';
+	if( OPTIONS.inputClass ) {
+		def cc = OPTIONS.inputClass;
+		if( cc.trim().startsWith("+") ) {
+			inputClass += ' ' + cc.substring(1);
+		}		
+		else {
+			inputClass = cc;		
+		}
+	}	
+
+	def props = OPTIONS.attrs;
+	if(props == null ) props = [:];
+	props.context = OPTIONS.context;
+	props.name = OPTIONS.name;
+
+	boolean required = false;
+	if( OPTIONS.required !=null ) {
+		required = OPTIONS.required;
+		props.required = required;
+	}
+
+	boolean showValidity = false;
+	if( OPTIONS.showValidity ) showValidity = OPTIONS.showValidity;
+
+	def attrs = "";
+	def list = [];
+	props.each { k,v->
+		list << ' r:'+k+'="'+v+ '"' ;		
+	}
+	attrs = list.join(" ");
+%>
+
+<div${blockClass}${visibleWhen}${depends} r:context="${OPTIONS.context}">
+	<label class="${captionClass}">${OPTIONS.caption}<%if(required==true){%><b style="color:red"> * </b><%}%></label>
+	<div style="width:50%">
+		<div>
+		    <label class="${subCaptionClass}" >Ref No</label>
+		    <input type="text" r:context="${OPTIONS.context}" r:caption="${OPTIONS.caption} Refno"  
+		    r:name="${OPTIONS.name}.refno" r:required="${required}" class="w200"/>
+	  	</div>
+		<div>
+		    <label class="${subCaptionClass}">Date Issued</label>
+		    <input type="text" r:context="${OPTIONS.context}" r:caption="${OPTIONS.caption} Date Issued" 
+		    r:name="${OPTIONS.name}.dtissued" r:datatype="date" r:required="${required}" class="w200"/>
+	  	</div>
+		<div> 
+		    <label class="${subCaptionClass}">Place Issued</label>
+		    <input type="text" r:context="${OPTIONS.context}" r:caption="${OPTIONS.caption} Place Issued"
+		    r:name="${OPTIONS.name}.placeissued" r:required="${required}" class="w200"/>
+	  	</div>
+
+	  	<%if( showValidity == true  ) {%>
+		    <label class="${subCaptionClass}">Validity Date</label>
+		    <input type="text" r:context="${OPTIONS.context}" r:caption="${OPTIONS.caption} Validity Date"
+		    r:name="${OPTIONS.name}.dtvalid" r:datatype="date" r:required="${required}" class="w200"/>
+	  	<%}%>
+	</div>  	
+</div>

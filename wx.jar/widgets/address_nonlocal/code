@@ -1,0 +1,76 @@
+<%   
+	def blockClass = '';
+	if( OPTIONS.blockClass ) blockClass = " class=\""+OPTIONS.blockClass+ "\"";
+
+	def visibleWhen = '';
+	if( OPTIONS.visibleWhen ) visibleWhen = " r:visibleWhen=\""+OPTIONS.visibleWhen+ "\"";
+	def depends = '';
+	if( OPTIONS.depends ) depends = " r:depends=\""+OPTIONS.depends+ "\"";
+
+	def captionClass = 'caption-class';
+	if( OPTIONS.captionClass ) {
+		def cc = OPTIONS.captionClass;
+		if( cc.trim().startsWith("+") ) {
+			captionClass += ' ' + cc.substring(1);
+		}		
+		else {
+			captionClass = cc;		
+		}
+	}	
+
+	boolean readOnly = false;
+	if( OPTIONS.readonly ) readOnly = OPTIONS.readonly;
+
+	boolean required = false;
+	if( OPTIONS.required !=null ) {
+		required = OPTIONS.required;
+	}
+
+	def props = OPTIONS.attrs;
+	if(props == null ) props = [:];
+	props.context = OPTIONS.context;
+
+	def attrs = "";
+	def list = [];
+	props.each { k,v->
+		list << ' r:'+k+'="'+v+ '"';		
+	}
+	attrs = list.join(" ");
+%>
+<div${blockClass}${visibleWhen}${depends} r:context="${OPTIONS.context}">
+	<label class="${captionClass}">${OPTIONS.caption}<%if(required==true){%><b style="color:red"> * </b><%}%></label>
+	<%if(readOnly == false){ %>
+		<div style="display:inline-block;">
+			<div style="padding:0px;">
+				<input type="text" placeHolder="Unit No" style="width:20%;margin-right: -3px;" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.unitno"  />
+				<input type="text" placeHolder="Bldg No" style="width:20%;margin-right: -4px;" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.bldgno"/>		
+				<input type="text" placeHolder="Subdivision" style="width:60%;margin-right:-2px;" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.subdivision"/>
+			</div>
+			<div>
+				<input type="text" placeHolder="Street" style="width:100%;margin-right:2px;" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.street"/>
+			</div>
+			<div>
+				<input type="text" placeHolder="Barangay" style="width:40%;margin-right:-3px" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.barangay.name"/>	
+				<input type="text" placeHolder="City/Municipality" style="width:30%;margin-right: -4px;" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.citymunicipality"/>		
+				<input type="text" placeHolder="Province"  style="width:30%;margin-right: -2px;" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.province"/>		
+			</div>
+		</div>
+	<% } %>
+	<%if(readOnly == true){ %>
+		<div style="display:inline-block;">
+			<div style="padding:0px;">
+				<input type="text" placeHolder="Unit No" style="width:20%;margin-right: -3px;" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.unitno" disabled />
+				<input type="text" placeHolder="Bldg No" style="width:20%;margin-right: -4px;" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.bldgno" disabled/>		
+				<input type="text" placeHolder="Subdivision" style="width:60%;margin-right:-2px;" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.subdivision" disabled/>
+			</div>
+			<div>
+				<input type="text" placeHolder="Street" style="width:100%;margin-right:2px;" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.street" disabled/>
+			</div>
+			<div>
+				<input type="text" placeHolder="Barangay" style="width:40%;margin-right:-3px" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.barangay.name" disabled/>	
+				<input type="text" placeHolder="City/Municipality" style="width:30%;margin-right: -4px;" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.citymunicipality" disabled/>		
+				<input type="text" placeHolder="Province"  style="width:30%;margin-right: -2px;" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.province" disabled/>		
+			</div>
+		</div>
+	<% } %>
+</div>

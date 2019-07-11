@@ -18,34 +18,44 @@
 		}
 	}	
 
-	def action = OPTIONS.action;
-
-	def outputClass = 'output-class';
-	if( OPTIONS.outputClass ) {
-		def cc = OPTIONS.outputClass;
+	def inputClass = 'input-class';
+	if( OPTIONS.inputClass ) {
+		def cc = OPTIONS.inputClass;
 		if( cc.trim().startsWith("+") ) {
-			outputClass += ' ' + cc.substring(1);
+			inputClass += ' ' + cc.substring(1);
 		}		
 		else {
-			outputClass = cc;		
+			inputClass = cc;		
 		}
 	}	
 
-	def props = OPTIONS.attrs;
-	if(props == null ) props = [:];
+	def placeHolder = '';
+	if( OPTIONS.hint ) placeHolder = " placeHolder=\""+OPTIONS.hint+ "\"";
+
+	def props = [:];
+	if( OPTIONS.attrs !=null ) props.putAll( OPTIONS.attrs );
+
 	props.context = OPTIONS.context;
+	props.name = OPTIONS.name;
+	props.caption = OPTIONS.caption;
+	props.datatype = "decimal";
+
+	boolean required = false;
+	if( OPTIONS.required !=null ) {
+		required = OPTIONS.required;
+		props.required = required;
+	}
 
 	def attrs = "";
 	def list = [];
 	props.each { k,v->
-		list << ' r:'+k+'="'+v+ '"';		
+		list << ' r:'+k+'="'+v+ '"' ;		
 	}
 	attrs = list.join(" ");
+
 %>
+
 <div${blockClass}${visibleWhen}${depends} r:context="${OPTIONS.context}">
-	<label class="${captionClass}">${OPTIONS.caption}</label>
-	<label class="${outputClass}"${attrs}>${OPTIONS.expr}</label> 
-	<%if( action!=null) { %>
-		&nbsp;&nbsp;<a r:context="${OPTIONS.context}" r:name="${action.name}">${action.caption}</a>
-	<%}%>
+	<label class="${captionClass}">${OPTIONS.caption} <%if(required==true){%><b style="color:red"> * </b><%}%></label>
+	<input type="text" class="${inputClass}" ${attrs} ${placeHolder}/> 
 </div>

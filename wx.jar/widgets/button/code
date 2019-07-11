@@ -1,0 +1,22 @@
+<%   
+	def buttonClass = 'button-class';
+	if( OPTIONS.buttonClass ) buttonClass = OPTIONS.buttonClass;
+
+	def props = [:];
+	if( OPTIONS.attrs !=null ) props.putAll( OPTIONS.attrs );
+
+	props.context = OPTIONS.context;
+	props.name = OPTIONS.name;
+
+	if( OPTIONS.visibleWhen ) props.visibleWhen = OPTIONS.visibleWhen;
+	if( OPTIONS.depends ) props.depends = OPTIONS.depends;
+
+	def attrs = "";
+	def list = [];
+	props.each { k,v->
+		list << ' r:'+k+'="'+v+ '"' ;		
+	}
+	attrs = list.join(" ");
+
+%>
+<input type="submit" class="${buttonClass}"${attrs} value="${OPTIONS.caption}" /> 

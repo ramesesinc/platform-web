@@ -29,8 +29,6 @@
 		}
 	}	
 
-	def placeHolder = '';
-	if( OPTIONS.hint ) placeHolder = " placeHolder=\""+OPTIONS.hint+ "\"";
 
 	def props = [:];
 	if( OPTIONS.attrs !=null ) props.putAll( OPTIONS.attrs );
@@ -52,11 +50,15 @@
 	}
 	attrs = list.join(" ");
 
+	def options = OPTIONS.items;
+	if(options==null) options = [];
 %>
 
 <div${blockClass}${visibleWhen}${depends} r:context="${OPTIONS.context}">
-	<%if( OPTIONS.caption ) {%>
 	<label class="${captionClass}">${OPTIONS.caption} <%if(required==true){%><b style="color:red"> * </b><%}%></label>
-	<%}%>
-	<input type="text" class="${inputClass}" ${attrs} ${placeHolder} /> 
+	<div class="${inputClass}" style="display:inline-block;">
+		<%options.each { o-> %>
+			<input type="radio"${attrs} value="${o.key}">&nbsp;${o.value}
+		<%}%>
+	</div>
 </div>
