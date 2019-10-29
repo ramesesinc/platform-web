@@ -55,9 +55,6 @@
 		</div>
 		<div>
 			<select r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.barangay" r:compareKey="objid" r:items="barangayList" r:itemLabel="name" r:allowNull="true" r:required="true" r:emptyText="Select Barangay" style="width:40%; margin-right:-3px" ${disabled}></select>
-
-			<input type="text" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.citymunicipality" disabled style="width:30%; margin-right:-4px;"/> 
-			<input type="text" r:context="${OPTIONS.context}" r:name="${OPTIONS.name}.province" disabled style="width:30%; margin-right:-2px;"/> 
 		</div>
 	</div>
 
