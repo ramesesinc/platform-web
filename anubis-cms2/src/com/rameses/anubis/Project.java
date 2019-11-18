@@ -12,6 +12,7 @@ package com.rameses.anubis;
 import com.rameses.anubis.FileDir.FileFilter;
 import com.rameses.util.ConfigProperties;
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
@@ -155,22 +156,10 @@ public class Project extends HashMap  {
     
     private void loadModules() {
         modules.clear();
-        try {
-            String path = ContentUtil.correctUrlPath(getUrl(), null, "modules");
-            FileDir.scan(path, new FileFilter(){
-                public void handle(FileDir.FileInfo f) {
-                    URL conf = f.getSubfile("module.conf");
-                    if(conf!=null) {
-                        Module module = new Module(f.getName(), f.getUrl().toString());
-                        module.setProject(Project.this);
-                        modules.put(module.getName(), module);
-                    }
-                }
-            });
-        } catch(Exception warn) {
-            //System.out.println("WARNING. Module loading error-> " + warn.getMessage() );
-        }
         
+        // 
+        // 1. load modules from config file 
+        // 
         BufferedReader br = null;
         try {
             String text = null; 
@@ -184,18 +173,35 @@ public class Project extends HashMap  {
                 String key = arr[0].trim();
                 String val = arr[1].trim();                
                 
+                InputStream inp = null; 
                 try {
-                    new URL(val +"/module.conf").openStream(); 
+                    inp = new URL(val +"/module.conf").openStream();
                 } catch(Throwable t) {
                     continue; 
-                }
+                } 
                 
                 try {
-                    Module mod = new Module(key, new URL(val+"/").toString()); 
+                    URL urlc = new URL( val +"/" ); 
+                    
+                    Module mod = null; 
+                    ConfigProperties props = new ConfigProperties(inp); 
+                    String modname = props.get("name"); 
+                    if ( modname == null || modname.trim().length() == 0 ) {
+                        mod = new Module( modname, urlc.toString()); 
+                    }
+                    else {
+                        mod = new Module( key, urlc.toString()); 
+                    }
+                    
                     mod.setProject( this ); 
                     modules.put( mod.getName(), mod ); 
-                } catch(Throwable t) {
+                } 
+                catch(Throwable t) {
                     System.out.println("failed to load URL -> "+ val);
+                    t.printStackTrace(); 
+                }
+                finally {
+                    try{ inp.close(); }catch(Throwable t){;} 
                 }
             }
         } catch(Throwable t) {
@@ -203,6 +209,50 @@ public class Project extends HashMap  {
         } finally {
             try { br.close(); }catch(Throwable t){;}
         }
+        
+        // 
+        // 2. load module folders from "modules" directory 
+        //         
+        try {
+            String[] paths = new String[]{ 
+                ContentUtil.correctUrlPath(getUrl(), null, "modules"), 
+                ContentUtil.correctUrlPath(getUrl(), null, "modules/ext") 
+            }; 
+            
+            for (String path : paths) {
+                FileDir.scan(path, new FileFilter(){
+                    public void handle(FileDir.FileInfo f) {
+                        String fname = f.getName(); 
+                        URL furl  = f.getUrl();
+
+                        try {
+                            URL urlc = f.getSubfile("module.conf");
+                            if ( urlc == null ) return; 
+                            
+                            Module module = null; 
+                            ConfigProperties props = new ConfigProperties(urlc);
+                            String modname = props.get("name"); 
+                            if ( modname == null || modname.trim().length() == 0 ) {
+                                module = new Module(modname, f.getUrl().toString());
+                            }
+                            else {
+                                module = new Module(fname, f.getUrl().toString());
+                            }
+                            
+                            module.setProject(Project.this);
+                            modules.put(module.getName(), module);
+                        } 
+                        catch(Throwable t) {
+                            System.out.println("["+ fname +"] failed to load module ("+ furl +") ");
+                            t.printStackTrace(); 
+                        }
+                    }
+                });
+            }            
+        } 
+        catch(Throwable t) {
+            t.printStackTrace(); 
+        }        
     }
     
     
