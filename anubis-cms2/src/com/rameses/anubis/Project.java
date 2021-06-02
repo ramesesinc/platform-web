@@ -12,6 +12,8 @@ package com.rameses.anubis;
 import com.rameses.anubis.FileDir.FileFilter;
 import com.rameses.util.ConfigProperties;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -154,17 +156,33 @@ public class Project extends HashMap  {
         
     }
     
+    private InputStream openStream( URL url ) {
+        try {
+            return (url == null ? null : url.openStream()); 
+        } catch(FileNotFoundException ffe) {
+            return null; 
+        } catch(IOException ioe) {
+            return null; 
+        }
+    }
+    
     private void loadModules() {
         modules.clear();
         
         // 
         // 1. load modules from config file 
         // 
+        InputStream inp = null;        
         BufferedReader br = null;
         try {
             String text = null; 
             URL url = new URL(getUrl() +"modules.conf");
-            br = new BufferedReader(new InputStreamReader( url.openStream()));
+            inp = openStream( url ); 
+            if ( inp == null ) {
+                inp = new ByteArrayInputStream(new byte[]{});  
+            }
+            
+            br = new BufferedReader(new InputStreamReader( inp ));
             while ((text=br.readLine()) != null) {
                 if ( text.trim().length() == 0 ) continue; 
                 if ( text.trim().startsWith("#")) continue;
@@ -173,7 +191,6 @@ public class Project extends HashMap  {
                 String key = arr[0].trim();
                 String val = arr[1].trim();                
                 
-                InputStream inp = null; 
                 try {
                     inp = new URL(val +"/module.conf").openStream();
                 } catch(Throwable t) {

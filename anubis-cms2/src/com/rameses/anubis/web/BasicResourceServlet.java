@@ -11,6 +11,18 @@ import org.eclipse.jetty.util.resource.Resource;
 public class BasicResourceServlet extends AbstractAnubisServlet  
 {    
     
+    private Resource findResource( Resource parent, String path ) {
+        try { 
+            if ( parent == null ) {
+                return Resource.newResource( path ); 
+            }
+            return parent.getResource( path ); 
+        } 
+        catch(Throwable t) {
+            return null; 
+        }
+    }
+    
     protected void handle(HttpServletRequest hreq, HttpServletResponse hres) throws Exception 
     {
         AnubisContext ctx = AnubisContext.getCurrentContext();
@@ -43,8 +55,8 @@ public class BasicResourceServlet extends AbstractAnubisServlet
         {
             try 
             {
-                Resource base_res = Resource.newResource(dir); 
-                Resource file_res = base_res.getResource(fullPath);  
+                Resource base_res = findResource( null, dir ); 
+                Resource file_res = findResource( base_res, fullPath );
                 if (!file_res.getFile().exists()) throw new FileNotFoundException();
                 
                 long lastModified = file_res.lastModified();

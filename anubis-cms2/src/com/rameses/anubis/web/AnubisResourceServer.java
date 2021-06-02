@@ -9,14 +9,26 @@
 
 package com.rameses.anubis.web;
 
+import com.rameses.io.IOStream;
 import com.rameses.server.ServerLoader;
 import com.rameses.server.ServerPID;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.util.Map;
 import java.util.Properties;
+import javax.servlet.http.HttpServletRequest;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 /**
@@ -72,7 +84,7 @@ public class AnubisResourceServer implements ServerLoader
         if ("true".equalsIgnoreCase(webconf.getProperty("list-directories")+"")) dirsListed = true; 
         
         HandlerList handlerlist = new HandlerList(); 
-        ResourceHandler static_resource_handler = new ResourceHandler();
+        ResourceHandler static_resource_handler = new ResourceHandlerImpl();
         static_resource_handler.setResourceBase(homeUrl.toString());
         static_resource_handler.setDirectoriesListed(dirsListed);
         handlerlist.addHandler(static_resource_handler);   
@@ -163,5 +175,208 @@ public class AnubisResourceServer implements ServerLoader
         if (sv == null || sv.trim().length() == 0) return null;
         
         return new Integer(sv.trim()); 
+    }
+    
+    private class ResourceHandlerImpl extends ResourceHandler {
+
+        @Override
+        protected Resource getResource(HttpServletRequest request) throws MalformedURLException {
+            Resource res = super.getResource(request);
+            if ( res instanceof XmlResource ) {
+                return res; 
+            }
+                
+            URI uri = (res == null ? null : res.getURI());
+            if ( uri != null && uri.toString().endsWith(".xml") && !res.isDirectory()) {
+                return new XmlResource( res ); 
+            }
+            return res; 
+        }
+    }
+    
+    private class XmlResource extends Resource {
+
+        private Resource source; 
+        private byte[] bytes; 
+        
+        XmlResource( Resource source ) {
+            this.source = source; 
+        }
+        
+        @Override
+        public boolean isContainedIn(Resource rsrc) throws MalformedURLException {
+            return source.isContainedIn(rsrc); 
+        }
+
+        @Override
+        public void release() {
+            source.release();
+            bytes = null; 
+        }
+
+        @Override
+        public boolean exists() {
+            return source.exists();
+        }
+
+        @Override
+        public boolean isDirectory() {
+            return source.isDirectory();
+        }
+
+        @Override
+        public long lastModified() {
+//            return source.lastModified();
+            return System.currentTimeMillis(); 
+        }
+
+        byte[] getBytes() {
+            if ( bytes == null ) {
+                byte[] arr = null; 
+                try { 
+                    arr = IOStream.toByteArray( source.getInputStream());
+                } catch (IOException ex) {
+                    throw new RuntimeException( ex );
+                }
+                
+                if ( arr != null ) {
+                    Object val = null; 
+                    try {
+                        val = new String( arr, "UTF-8");
+                    } catch (UnsupportedEncodingException ex) {
+                        val = new String( arr );
+                    }
+                    
+                    val = resolveValueImpl( val ); 
+                    
+                    try { 
+                        bytes = val.toString().getBytes("UTF-8");
+                    } catch (UnsupportedEncodingException ex) {
+                        bytes = val.toString().getBytes();
+                    }
+                }
+            }
+            return bytes; 
+        }
+        
+        int resolve_value_stack_counter = 0; 
+        private Object resolveValueImpl(Object value) { 
+            resolve_value_stack_counter += 1;
+            if ( resolve_value_stack_counter > 10 ) {
+                return value; 
+            }
+
+            if (value == null) { 
+                return null; 
+            } else if (!(value instanceof String)) {
+                return value; 
+            }
+
+            int startidx = 0; 
+            boolean has_expression = false; 
+            String str = value.toString();         
+            StringBuilder builder = new StringBuilder(); 
+            while (true) {
+                int idx0 = str.indexOf("${", startidx);
+                if (idx0 < 0) break;
+
+                int idx1 = str.indexOf("}", idx0); 
+                if (idx1 < 0) break;
+
+                has_expression = true; 
+                String skey = str.substring(idx0+2, idx1); 
+                builder.append(str.substring(startidx, idx0)); 
+
+                Object objval = System.getProperty( skey );
+                if (objval == null) {
+                    objval = System.getenv(skey); 
+                }
+
+                if (objval == null) { 
+                    builder.append(str.substring(idx0, idx1+1)); 
+                } else { 
+                    builder.append( objval ); 
+                } 
+                startidx = idx1+1; 
+            } 
+
+            Object finalResult = null; 
+            if (has_expression) {
+                builder.append(str.substring(startidx));  
+                finalResult = builder.toString(); 
+            } 
+            else {
+                finalResult = value;
+            }
+
+            if ( finalResult != null && hasExpression( finalResult)) {
+                return resolveValueImpl( finalResult ); 
+            } 
+            return finalResult;
+        } 
+
+        private boolean hasExpression( Object value ) {
+            String str = (value == null ? null : value.toString()); 
+            if ( str == null || str.length() == 0 ) {
+                return false; 
+            }
+
+            int idx0 = str.indexOf("${");
+            if (idx0 < 0) return false; 
+
+            int idx1 = str.indexOf("}", idx0); 
+            return (idx1 > 0); 
+        }
+        
+        
+        @Override
+        public long length() {
+            return getBytes().length; 
+        }
+
+        @Override
+        public URL getURL() {
+            return source.getURL();
+        }
+
+        @Override
+        public File getFile() throws IOException {
+            return source.getFile();
+        }
+
+        @Override
+        public String getName() {
+            return source.getName();
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            return new ByteArrayInputStream( getBytes()); 
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException, SecurityException {
+            return source.getOutputStream();
+        }
+
+        @Override
+        public boolean delete() throws SecurityException {
+            return source.delete();
+        }
+
+        @Override
+        public boolean renameTo(Resource rsrc) throws SecurityException {
+            return source.renameTo( rsrc );
+        }
+
+        @Override
+        public String[] list() {
+            return source.list();
+        }
+
+        @Override
+        public Resource addPath(String string) throws IOException, MalformedURLException {
+            return source.addPath( string ); 
+        }
     }
 }
