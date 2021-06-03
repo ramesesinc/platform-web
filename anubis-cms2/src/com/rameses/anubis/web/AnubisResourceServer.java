@@ -35,8 +35,10 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
  *
  * @author wflores
  */
-public class AnubisResourceServer implements ServerLoader  
-{
+public class AnubisResourceServer implements ServerLoader {
+    
+    private final static String PROP_DOWNLOAD_MODULE_DIR = "download-module-dir";
+    
     private String name;
     private int port;    
     private int low_resources_connections = 0; //set if > 0 
@@ -77,11 +79,13 @@ public class AnubisResourceServer implements ServerLoader
             System.out.println("[WARN] " + getClass().getSimpleName() + ": Please specify home.url property in the conf file"); 
             return; 
         } 
-        
+                
         loadConfProperties(webconf);
         
         boolean dirsListed = false; 
-        if ("true".equalsIgnoreCase(webconf.getProperty("list-directories")+"")) dirsListed = true; 
+        if ("true".equalsIgnoreCase(webconf.getProperty("list-directories")+"")) { 
+            dirsListed = true;
+        } 
         
         HandlerList handlerlist = new HandlerList(); 
         ResourceHandler static_resource_handler = new ResourceHandlerImpl();
@@ -188,7 +192,7 @@ public class AnubisResourceServer implements ServerLoader
                 
             URI uri = (res == null ? null : res.getURI());
             if ( uri != null && uri.toString().endsWith(".xml") && !res.isDirectory()) {
-                return new XmlResource( res ); 
+                return new XmlResource( uri, res ); 
             }
             return res; 
         }
@@ -196,11 +200,17 @@ public class AnubisResourceServer implements ServerLoader
     
     private class XmlResource extends Resource {
 
+        private URI uri;
         private Resource source; 
         private byte[] bytes; 
+
+        private File dir; 
         
-        XmlResource( Resource source ) {
+        XmlResource( URI uri, Resource source ) {
+            this.uri = uri;
             this.source = source; 
+            
+            this.dir = new File( uri ).getParentFile(); 
         }
         
         @Override
@@ -253,6 +263,25 @@ public class AnubisResourceServer implements ServerLoader
                         bytes = val.toString().getBytes("UTF-8");
                     } catch (UnsupportedEncodingException ex) {
                         bytes = val.toString().getBytes();
+                    }
+                    
+                    boolean pass = false;
+                    XmlParser parser = new XmlParser();
+                    try {
+                        parser.parse( this.uri, bytes );
+                        val = parser.getText(); 
+                        pass = true; 
+                    }
+                    catch(Throwable t) {
+                        t.printStackTrace(); 
+                    }
+
+                    if ( pass ) {
+                        try { 
+                            bytes = val.toString().getBytes("UTF-8");
+                        } catch (UnsupportedEncodingException ex) {
+                            bytes = val.toString().getBytes();
+                        } 
                     }
                 }
             }
